@@ -453,7 +453,7 @@ app.put('/api/tasks/:id', authenticateToken, async (req, res) => {
       description !== undefined ? description : task.description,
       details !== undefined ? details : task.details,
       priority !== undefined ? priority : task.priority, // Actualiza la prioridad elegida o conserva la anterior
-      status !== undefined ? status : task.status,
+      status !== undefined ? status : task.status, // Actualiza el estado de la actividad (columna del tablero Kanban) o conserva el actual
       project !== undefined ? project : task.project,
       epic !== undefined ? epic : task.epic,
       userStory !== undefined ? userStory : task.user_story,
@@ -465,7 +465,7 @@ app.put('/api/tasks/:id', authenticateToken, async (req, res) => {
 
     await db.close()
 
-    // Log Activity based on type of update
+    // Registra en el historial si la actividad fue movida de columna/estado, o si fue otra modificación general
     if (status !== undefined && status !== task.status) {
       await logActivity(
         `Actividad "${task.title}" movida a "${statusLabels[status] || status}" por ${req.user.name}`, 
