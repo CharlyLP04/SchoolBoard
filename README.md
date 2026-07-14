@@ -33,38 +33,6 @@ npm run dev
 
 Abre `http://localhost:5173`.
 
-## Cobertura de Historias de Usuario
-
-| HU | Historia | Prioridad | Estado |
-|---|---|---|---|
-| HU-01 | Inicio de sesión | must · MVP | ✅ |
-| HU-02 | Crear actividad | must · MVP | ✅ |
-| HU-03 | Asignar responsable | must · MVP | ✅ |
-| HU-04 | Definir fecha límite | must · MVP | ✅ |
-| HU-05 | Definir prioridad | must · MVP | ✅ |
-| HU-06 | Visualizar tablero Kanban | must · MVP | ✅ |
-| HU-07 | Cambiar estatus de actividad | must · MVP | ✅ |
-| HU-08 | Ver detalle de actividad | should · MVP | ✅ |
-| HU-09 | Agregar comentarios | should · MVP | ✅ |
-| HU-10 | Agregar evidencia por enlace | must · MVP | ✅ |
-| HU-11 | Consultar indicadores básicos | must · MVP | ✅ |
-| HU-12 | Editar actividad | should · MVP | ✅ |
-| HU-13 | Eliminar actividad | could | ✅ |
-| HU-14 | Filtrar y buscar actividades | could | ✅ |
-| HU-15 | Registro de usuario | should | ✅ |
-| HU-16 | Recuperar contraseña | could | ✅ (simulada, ver nota abajo) |
-| HU-17 | Crear espacio de trabajo | could | ✅ |
-| HU-18 | Invitar miembros | could | ✅ |
-| HU-19 | Crear lista | could | ✅ |
-| HU-20 | Editar o eliminar lista | could | ✅ |
-| HU-21 | Subtareas y checklist | could | ✅ |
-| HU-22 | Notificaciones | **won't** | ⛔ Fuera de alcance (marcada "won't" en el backlog original) |
-| HU-23 | Editar perfil | won't | ✅ (ya estaba, incluye personalización de tema) |
-
-## Notas sobre HU-16 (Recuperar contraseña)
-
-Este entorno académico no tiene un servidor de correo real conectado. El flujo es completamente funcional (token real con expiración de 30 minutos, guardado en base de datos, y permite establecer una nueva contraseña), pero en vez de enviarse por correo, el enlace se muestra directamente en pantalla para poder probar el flujo completo sin un servicio de email. Si más adelante conectas un proveedor (SendGrid, Resend, etc.), solo hay que reemplazar esa parte en `server/index.js` (`POST /api/auth/forgot-password`).
-
 ## Notas sobre Espacios de Trabajo (HU-17 a HU-20)
 
 Se implementaron como una sección independiente del Tablero principal (que sigue usando las 4 columnas fijas Pendiente/Proceso/Revisión/Completada de las HU-01 a HU-14). Los "Espacios de trabajo" son tableros estilo Trello: cada uno con sus propias listas personalizables y tarjetas simples, donde puedes invitar compañeros por correo (deben tener cuenta registrada previamente).
