@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-lavender: #8b7cf6;
+    --color-lavender-hover: #7c6df0;
+    --color-lavender-light: #efeafe;
+  }
+
+  html, body {
+    @apply bg-bg text-text-primary antialiased;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #2b2b38 transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  *::-webkit-scrollbar-thumb {
+    background-color: #2b2b38;
+    border-radius: 999px;
+  }
+}
+
+@layer components {
+  .input-base {
+    @apply w-full bg-bg-field border border-border-field rounded-xl px-3.5 py-2.5 text-sm
+           text-text-primary placeholder:text-text-muted outline-none transition-colors
+           focus:border-lavender;
+  }
+
+  .btn-primary {
+    @apply w-full bg-lavender hover:bg-lavender-hover text-white font-semibold text-sm
+           rounded-xl py-3 transition-colors disabled:opacity-70 disabled:cursor-not-allowed
+           flex items-center justify-center gap-2;
+  }
+
+  .card {
+    @apply bg-bg-card border border-border rounded-2xl;
+  }
+}
