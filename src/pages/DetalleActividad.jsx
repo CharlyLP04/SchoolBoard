@@ -459,7 +459,16 @@ export default function DetalleActividad() {
               {/* Responsable */}
               <div className="flex items-start justify-between">
                 <span className="text-text-muted font-medium">Responsable</span>
-                <span className="text-text-primary font-semibold text-right">{task.assignee || 'Sin asignar'}</span>
+                <div className="text-right">
+                  {(!task.assignee || task.assignee === 'Sin asignar') ? (
+                    <span className="text-priority-high font-semibold flex items-center justify-end gap-1">
+                      <AlertCircle size={12} />
+                      Sin asignar (Se solicita asignación)
+                    </span>
+                  ) : (
+                    <span className="text-text-primary font-semibold">{task.assignee}</span>
+                  )}
+                </div>
               </div>
 
               {/* Fecha límite */}

@@ -384,19 +384,21 @@ app.get('/api/tasks', authenticateToken, async (req, res) => {
   }
 })
 
-// POST /api/tasks - Create a new task
+// POST /api/tasks - Endpoint para registrar una nueva actividad (guardando responsable y prioridad)
 app.post('/api/tasks', authenticateToken, async (req, res) => {
+  // Desestructura la información enviada en el cuerpo de la solicitud
   const { 
     id, title, description, details, priority, status, 
     project, epic, userStory, assignee, date, created, updated, evidences 
   } = req.body
 
+  // Validación básica obligatoria: la actividad requiere un título
   if (!title) return res.status(400).json({ error: 'El título es requerido.' })
 
   try {
     const db = await getDbConnection()
     
-    // Save task
+    // Inserta la nueva actividad en la tabla 'tasks', definiendo responsable (assignee) y prioridad (priority)
     await db.run(`
       INSERT INTO tasks (id, title, description, details, priority, status, project, epic, user_story, assignee, date, created, updated)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -424,13 +426,15 @@ app.post('/api/tasks', authenticateToken, async (req, res) => {
   }
 })
 
-// PUT /api/tasks/:id - Update an existing task (or change its status/column)
+// PUT /api/tasks/:id - Endpoint para actualizar una actividad existente (incluyendo reasignar responsable o cambiar prioridad)
 app.put('/api/tasks/:id', authenticateToken, async (req, res) => {
   const { id } = req.params
+  // Obtiene los datos a actualizar desde el cuerpo de la solicitud
   const { title, description, details, priority, status, project, epic, userStory, assignee, date, updated } = req.body
 
   try {
     const db = await getDbConnection()
+    // Busca la actividad en la base de datos para confirmar que existe
     const task = await db.get('SELECT * FROM tasks WHERE id = ?', [id])
 
     if (!task) {
@@ -438,6 +442,7 @@ app.put('/api/tasks/:id', authenticateToken, async (req, res) => {
       return res.status(404).json({ error: 'Tarea no encontrada.' })
     }
 
+    // Actualiza la tarea. Para cada campo, si se recibe un nuevo valor se actualiza; de lo contrario se conserva el actual.
     await db.run(`
       UPDATE tasks 
       SET title = ?, description = ?, details = ?, priority = ?, status = ?, 
@@ -447,12 +452,12 @@ app.put('/api/tasks/:id', authenticateToken, async (req, res) => {
       title !== undefined ? title : task.title,
       description !== undefined ? description : task.description,
       details !== undefined ? details : task.details,
-      priority !== undefined ? priority : task.priority,
+      priority !== undefined ? priority : task.priority, // Actualiza la prioridad elegida o conserva la anterior
       status !== undefined ? status : task.status,
       project !== undefined ? project : task.project,
       epic !== undefined ? epic : task.epic,
       userStory !== undefined ? userStory : task.user_story,
-      assignee !== undefined ? assignee : task.assignee,
+      assignee !== undefined ? assignee : task.assignee, // Actualiza el responsable asignado o conserva el anterior
       date !== undefined ? date : task.date,
       updated,
       id

@@ -103,7 +103,9 @@ export default function Tablero() {
         : true
 
       const matchesPriority = priorityFilter ? task.priority === priorityFilter : true
-      const matchesAssignee = assigneeFilter ? task.assignee === assigneeFilter : true
+      const matchesAssignee = assigneeFilter
+        ? (task.assignee === assigneeFilter || (assigneeFilter === 'Sin asignar' && (!task.assignee || task.assignee === 'Sin asignar')))
+        : true
 
       return matchesSearch && matchesPriority && matchesAssignee
     })
@@ -157,6 +159,11 @@ export default function Tablero() {
             className="bg-bg-field border border-border-field text-text-secondary text-xs rounded-xl px-3 py-2 cursor-pointer outline-none focus:border-lavender transition-all"
           >
             <option value="">Todos los responsables</option>
+            <option value="Sin asignar">Sin asignar</option>
+            <option value="Carlos Olaya Gutierres">Carlos Olaya Gutierres</option>
+            <option value="Kevin Armando Montalvo Marcial">Kevin Armando Montalvo Marcial</option>
+            <option value="Francisco Xavier Gil Ginez">Francisco Xavier Gil Ginez</option>
+            <option value="Emmanuel Castro Salvador">Emmanuel Castro Salvador</option>
             <option value="Ana Pérez">Ana Pérez</option>
             <option value="Juan Sánchez">Juan Sánchez</option>
             <option value="Administrador">Administrador</option>

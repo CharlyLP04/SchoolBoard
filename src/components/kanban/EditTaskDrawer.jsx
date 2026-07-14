@@ -28,7 +28,7 @@ export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
   useEffect(() => {
     if (task && isOpen) {
       setTitle(task.title || '')
-      setAssignee(task.assignee || 'Ana Pérez')
+      setAssignee(task.assignee || 'Sin asignar')
       setDescription(task.description || '')
       setDetails(task.details || '')
       setDate(task.date || '')
@@ -57,7 +57,16 @@ export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
   if (!isOpen || !task) return null
 
   // Dropdown list options
-  const responsibleOptions = ['Ana Pérez', 'Juan Sánchez', 'Administrador']
+  const responsibleOptions = [
+    'Sin asignar',
+    'Carlos Olaya Gutierres',
+    'Kevin Armando Montalvo Marcial',
+    'Francisco Xavier Gil Ginez',
+    'Emmanuel Castro Salvador',
+    'Ana Pérez',
+    'Juan Sánchez',
+    'Administrador'
+  ]
   
   // Available epics and stories mapping
   const availableEpics = epicsMock.map(e => `${e.id} ${e.title}`)

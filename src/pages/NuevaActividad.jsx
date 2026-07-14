@@ -18,7 +18,7 @@ export default function NuevaActividad() {
   const [project, setProject] = useState('Backend Wizards')
   const [epic, setEpic] = useState('')
   const [userStory, setUserStory] = useState('')
-  const [assignee, setAssignee] = useState('Ana Pérez')
+  const [assignee, setAssignee] = useState('Sin asignar')
   const [date, setDate] = useState('')
   const [priority, setPriority] = useState('high') // High by default to match screenshot
   const [status, setStatus] = useState(defaultCol)
@@ -29,7 +29,16 @@ export default function NuevaActividad() {
 
   // Lists for dropdowns
   const projectOptions = ['Backend Wizards', 'Frontend Ninjas']
-  const responsibleOptions = ['Ana Pérez', 'Juan Sánchez', 'Administrador']
+  const responsibleOptions = [
+    'Sin asignar',
+    'Carlos Olaya Gutierres',
+    'Kevin Armando Montalvo Marcial',
+    'Francisco Xavier Gil Ginez',
+    'Emmanuel Castro Salvador',
+    'Ana Pérez',
+    'Juan Sánchez',
+    'Administrador'
+  ]
   
   const epicOptions = epicsMock.map(e => `${e.id} ${e.title}`)
   const userStoryOptions = epic

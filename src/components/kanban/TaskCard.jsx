@@ -65,8 +65,20 @@ export default function TaskCard({ task, draggable, onDragStart, onClick }) {
             </span>
           )}
         </div>
-        <div className="w-5 h-5 rounded-full bg-lavender/20 border border-bg-card flex items-center justify-center text-[10px] font-bold text-lavender uppercase">
-          {task.assignee ? task.assignee.split(' ').map(n=>n[0]).join('') : 'AP'}
+        <div className="flex items-center gap-1.5" title={task.assignee || 'Sin asignar'}>
+          <span className="text-[11px] text-text-secondary max-w-[80px] truncate">
+            {(!task.assignee || task.assignee === 'Sin asignar') ? 'Sin asignar' : task.assignee}
+          </span>
+          <div className={`w-5 h-5 rounded-full border border-bg-card flex items-center justify-center text-[9px] font-bold uppercase ${
+            (!task.assignee || task.assignee === 'Sin asignar')
+              ? 'bg-white/10 text-text-muted'
+              : 'bg-lavender/20 text-lavender'
+          }`}>
+            {(!task.assignee || task.assignee === 'Sin asignar')
+              ? 'SA'
+              : task.assignee.split(' ').filter(Boolean).map(n => n[0]).join('').substring(0, 2)
+            }
+          </div>
         </div>
       </div>
     </div>
