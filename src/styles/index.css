@@ -3,28 +3,225 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
+  :root, :root.dark {
     --color-lavender: #8b7cf6;
     --color-lavender-hover: #7c6df0;
     --color-lavender-light: #efeafe;
+
+    /* Modo Oscuro (Predeterminado) */
+    --color-bg: #0b0b10;
+    --color-bg-card: #16161d;
+    --color-bg-field: #1e1e28;
+    --color-border: #212129;
+    --color-border-field: #2b2b38;
+    --color-text-primary: #f2f1f7;
+    --color-text-secondary: #9a99a8;
+    --color-text-muted: #6b6a78;
+
+    /* Superficies hardcodeadas del modo oscuro como variables */
+    --surface-deep: #0b0b10;
+    --surface-card: #16161d;
+    --surface-modal: #14141c;
+    --surface-modal-alt: #141420;
+    --surface-field: #1e1e28;
+    --surface-input: #101018;
+    --surface-overlay: rgba(0,0,0,0.75);
+  }
+
+  :root.light {
+    /* Modo Claro (Ergonómico de Día) */
+    --color-bg: #f0f2f8;
+    --color-bg-card: #ffffff;
+    --color-bg-field: #e8eaf4;
+    --color-border: #d4d8ec;
+    --color-border-field: #c4c8de;
+    --color-text-primary: #1a1c2e;
+    --color-text-secondary: #4a4d68;
+    --color-text-muted: #72759a;
+
+    /* Superficies hardcodeadas → equivalentes en modo claro */
+    --surface-deep: #f0f2f8;
+    --surface-card: #ffffff;
+    --surface-modal: #ffffff;
+    --surface-modal-alt: #f8f9fc;
+    --surface-field: #e8eaf4;
+    --surface-input: #eceef8;
+    --surface-overlay: rgba(20, 22, 44, 0.6);
   }
 
   html, body {
     @apply bg-bg text-text-primary antialiased;
-    font-family: 'Inter', system-ui, sans-serif;
+    font-family: 'Plus Jakarta Sans', 'Outfit', system-ui, sans-serif;
+    font-size: 15px;
+    line-height: 1.6;
+    letter-spacing: 0.01em;
+    transition: background-color 0.25s ease, color 0.25s ease;
+  }
+
+  /* ☀️ MODO CLARO: Override global robusto que funciona con Tailwind compilado */
+  /* Se aplica a TODOS los descendientes del <html> cuando tiene clase .light */
+  html.light {
+    color-scheme: light;
+  }
+
+  /* Reset de todos los fondos oscuros y superficies */
+  html.light *:not([class*="bg-lavender"]):not([class*="bg-gradient"]):not([class*="bg-priority"]):not([class*="bg-emerald"]):not([class*="bg-amber"]):not([class*="bg-rose"]):not(button[class*="scale"]) {
+    border-color: var(--color-border);
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease;
+  }
+
+  /* Fondo principal de la app */
+  html.light body,
+  html.light #root,
+  html.light main,
+  html.light [class~="bg-bg"] {
+    background-color: var(--color-bg) !important;
+  }
+
+  /* Cards y paneles */
+  html.light [class~="card"],
+  html.light [class~="card-interactive"],
+  html.light [class~="bg-bg-card"],
+  html.light [class~="bg-bg-card\/50"],
+  html.light [class~="bg-bg-card\/90"],
+  html.light header {
+    background-color: var(--color-bg-card) !important;
+    border-color: var(--color-border) !important;
+  }
+
+  /* Header sticky */
+  html.light header {
+    background-color: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: blur(16px);
+    border-bottom-color: var(--color-border) !important;
+  }
+
+  /* Campos de formulario y inputs */
+  html.light [class~="bg-bg-field"],
+  html.light [class~="input-base"],
+  html.light input,
+  html.light select,
+  html.light textarea {
+    background-color: var(--color-bg-field) !important;
+    color: var(--color-text-primary) !important;
+    border-color: var(--color-border-field) !important;
+  }
+
+  /* Textos en blanco → color primario oscuro */
+  html.light [class~="text-white"] {
+    color: var(--color-text-primary) !important;
+  }
+  html.light [class~="text-text-primary"] {
+    color: var(--color-text-primary) !important;
+  }
+  html.light [class~="text-text-secondary"] {
+    color: var(--color-text-secondary) !important;
+  }
+  html.light [class~="text-text-muted"] {
+    color: var(--color-text-muted) !important;
+  }
+
+  /* Superficies con opacidades de blanco → fondo claro */
+  html.light [class~="bg-white\/5"],
+  html.light [class~="bg-white\/8"],
+  html.light [class~="bg-white\/10"],
+  html.light [class~="bg-white\/15"],
+  html.light [class~="bg-white\/20"],
+  html.light [class~="bg-white\/\[0\.02\]"] {
+    background-color: rgba(0, 0, 20, 0.03) !important;
+  }
+
+  /* Bordes con opacidades de blanco → borde sutil claro */
+  html.light [class~="border-white\/5"],
+  html.light [class~="border-white\/8"],
+  html.light [class~="border-white\/10"],
+  html.light [class~="border-white\/15"],
+  html.light [class~="border-white\/20"],
+  html.light [class~="border-white\/\[0\.02\]"] {
+    border-color: var(--color-border) !important;
+  }
+
+  /* Overlays / modales backdrop */
+  html.light [class~="bg-black\/75"],
+  html.light [class~="bg-black\/80"],
+  html.light [class~="bg-black\/70"],
+  html.light [class~="bg-black\/60"],
+  html.light [class~="bg-black\/50"] {
+    background-color: var(--surface-overlay) !important;
+  }
+
+  /* Superficies de modales y drawers */
+  html.light [role="dialog"],
+  html.light [class~="rounded-3xl"][class~="shadow-2xl"],
+  html.light [class~="rounded-2xl"][class~="shadow-2xl"],
+  html.light [class~="rounded-3xl"][class~="shadow-xl"] {
+    background-color: var(--surface-modal) !important;
+    border-color: var(--color-border) !important;
+  }
+
+  /* ✅ EXCEPCIONES: Preservar colores en botones/badges de acento y colores funcionales */
+  html.light [class~="bg-lavender"] .text-white,
+  html.light [class~="bg-lavender-hover"] .text-white,
+  html.light [class*="from-lavender"] .text-white,
+  html.light [class*="to-lavender"] .text-white,
+  html.light [class*="to-emerald"] .text-white,
+  html.light [class~="btn-primary"] {
+    color: #ffffff !important;
+  }
+  html.light [class~="bg-lavender"],
+  html.light [class~="bg-lavender-hover"] {
+    color: #ffffff !important;
+  }
+
+  /* Columnas Kanban en modo claro */
+  html.light [class~="bg-bg-card\/50"] {
+    background-color: rgba(255,255,255,0.7) !important;
+    border-color: var(--color-border) !important;
+    box-shadow: 0 2px 8px rgba(0,0,20,0.06) !important;
+  }
+
+  /* Barra de KPIs y workspace tabs */
+  html.light [class~="bg-\[#141420\]\/80"],
+  html.light [class~="bg-\[#14141c\]\/90"],
+  html.light [class~="bg-\[#14141c\]"] {
+    background-color: var(--surface-modal-alt) !important;
+  }
+
+  /* Scrollbar en modo claro */
+  * {
+    scrollbar-color: var(--color-border-field) transparent;
+  }
+
+  /* Protección Ocular: escalado mínimo legible para sesiones largas */
+  .text-\[9px\] {
+    font-size: 0.75rem !important;
+    line-height: 1.4 !important;
+    letter-spacing: 0.02em;
+  }
+  .text-\[10px\] {
+    font-size: 0.75rem !important;
+    line-height: 1.4 !important;
+    letter-spacing: 0.02em;
+  }
+  .text-\[11px\] {
+    font-size: 0.78rem !important;
+    line-height: 1.45 !important;
+  }
+  .text-xs {
+    font-size: 0.8125rem !important;
+    line-height: 1.5 !important;
   }
 
   * {
     scrollbar-width: thin;
-    scrollbar-color: #2b2b38 transparent;
+    scrollbar-color: var(--color-border-field) transparent;
   }
-
   *::-webkit-scrollbar {
     width: 6px;
     height: 6px;
   }
   *::-webkit-scrollbar-thumb {
-    background-color: #2b2b38;
+    background-color: var(--color-border-field);
     border-radius: 999px;
   }
 }
@@ -32,17 +229,46 @@
 @layer components {
   .input-base {
     @apply w-full bg-bg-field border border-border-field rounded-xl px-3.5 py-2.5 text-sm
-           text-text-primary placeholder:text-text-muted outline-none transition-colors
-           focus:border-lavender;
+           text-text-primary placeholder:text-text-muted outline-none transition-all duration-200
+           focus:border-lavender focus:bg-[#232332]/60;
+  }
+  .input-base:focus {
+    box-shadow: 0 0 0 3px rgba(139, 124, 246, 0.15);
   }
 
   .btn-primary {
     @apply w-full bg-lavender hover:bg-lavender-hover text-white font-semibold text-sm
-           rounded-xl py-3 transition-colors disabled:opacity-70 disabled:cursor-not-allowed
-           flex items-center justify-center gap-2;
+           rounded-xl py-3 transition-all duration-200 shadow-md
+           hover:shadow-lg hover:-translate-y-0.5
+           active:translate-y-0 active:scale-[0.98]
+           disabled:opacity-70 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:shadow-none
+           flex items-center justify-center gap-2 select-none;
+    box-shadow: 0 4px 14px rgba(139, 124, 246, 0.25);
+  }
+  .btn-primary:hover:not(:disabled) {
+    box-shadow: 0 6px 20px rgba(139, 124, 246, 0.4);
   }
 
   .card {
-    @apply bg-bg-card border border-border rounded-2xl;
+    @apply bg-bg-card border border-border rounded-2xl transition-all duration-200 shadow-lg;
   }
+
+  .card-interactive {
+    @apply bg-bg-card border border-border rounded-2xl transition-all duration-200 shadow-lg
+           hover:shadow-xl hover:-translate-y-0.5 cursor-pointer;
+  }
+  .card-interactive:hover {
+    border-color: rgba(139, 124, 246, 0.4);
+    box-shadow: 0 10px 25px rgba(139, 124, 246, 0.08);
+  }
+}
+
+/* Clases y animaciones complementarias para máxima fluidez */
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
 }

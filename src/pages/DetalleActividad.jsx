@@ -4,6 +4,7 @@ import { ChevronLeft, Edit3, MessageSquare, Plus, Trash2, Link2, Clock, Send, Ch
 import { useTasks } from '../context/TaskContext.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import EditTaskDrawer from '../components/kanban/EditTaskDrawer.jsx'
+import ConfirmModal from '../components/layout/ConfirmModal.jsx'
 
 export default function DetalleActividad() {
   const { id } = useParams()
@@ -20,6 +21,7 @@ export default function DetalleActividad() {
   } = useTasks()
 
   const [isDeleting, setIsDeleting] = useState(false)
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false)
 
   const task = getTaskById(id)
   
@@ -104,13 +106,13 @@ export default function DetalleActividad() {
     setIsStatusMenuOpen(false)
   }
 
-  async function handleDeleteTask() {
-    const confirmed = window.confirm(
-      `¿Eliminar la actividad "${task.title}"? Esta acción no se puede deshacer.`
-    )
-    if (!confirmed) return
+  function handleDeleteTask() {
+    setShowConfirmDelete(true)
+  }
 
+  async function executeDeleteTask() {
     setIsDeleting(true)
+    setShowConfirmDelete(false)
     try {
       await deleteTask(task.id)
       navigate('/inicio', { replace: true })
@@ -611,6 +613,15 @@ export default function DetalleActividad() {
         taskId={task.id} 
         isOpen={isDrawerOpen} 
         onClose={() => setIsDrawerOpen(false)} 
+      />
+
+      <ConfirmModal
+        isOpen={showConfirmDelete}
+        title="Eliminar actividad"
+        message={`¿Estás completamente seguro de eliminar la actividad "${task?.title}"? Esta acción no se puede deshacer.`}
+        confirmText="Sí, eliminar"
+        onConfirm={executeDeleteTask}
+        onCancel={() => setShowConfirmDelete(false)}
       />
     </div>
   )

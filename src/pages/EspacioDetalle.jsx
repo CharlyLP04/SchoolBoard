@@ -4,15 +4,19 @@ import {
   ChevronLeft, Plus, X, UserPlus, MoreVertical, Trash2, Pencil, Check, Loader2, Users,
 } from 'lucide-react'
 import { useAuth } from '../context/AuthContext.jsx'
+import { useToast } from '../context/ToastContext.jsx'
+import ConfirmModal from '../components/layout/ConfirmModal.jsx'
 
 const API = 'http://localhost:5000/api'
 
 function ListColumn({ list, token, onChanged }) {
+  const toast = useToast()
   const [isEditing, setIsEditing] = useState(false)
   const [title, setTitle] = useState(list.title)
   const [menuOpen, setMenuOpen] = useState(false)
   const [newCardTitle, setNewCardTitle] = useState('')
   const [isAddingCard, setIsAddingCard] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   async function handleRenameSave() {
     if (!title.trim()) return
@@ -25,12 +29,18 @@ function ListColumn({ list, token, onChanged }) {
     onChanged()
   }
 
-  async function handleDeleteList() {
-    if (!window.confirm(`¿Eliminar la lista "${list.title}"? Se eliminarán también sus tarjetas.`)) return
+  function handleDeleteList() {
+    setMenuOpen(false)
+    setShowConfirm(true)
+  }
+
+  async function executeDeleteList() {
+    setShowConfirm(false)
     await fetch(`${API}/workspaces/${list.workspace_id}/lists/${list.id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     })
+    toast.success('Lista eliminada correctamente', 2500)
     onChanged()
   }
 
@@ -155,6 +165,15 @@ function ListColumn({ list, token, onChanged }) {
           Añadir tarjeta
         </button>
       )}
+
+      <ConfirmModal
+        isOpen={showConfirm}
+        title="Eliminar lista"
+        message={`¿Estás seguro de eliminar la lista "${list.title}"? Se eliminarán también todas sus tarjetas.`}
+        confirmText="Sí, eliminar"
+        onConfirm={executeDeleteList}
+        onCancel={() => setShowConfirm(false)}
+      />
     </div>
   )
 }

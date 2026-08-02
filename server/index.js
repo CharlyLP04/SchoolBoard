@@ -509,16 +509,25 @@ app.delete('/api/tasks/:id', authenticateToken, async (req, res) => {
 // POST /api/tasks/:id/subtasks - Add a subtask
 app.post('/api/tasks/:id/subtasks', authenticateToken, async (req, res) => {
   const { id: taskId } = req.params
-  const { id, title, completed, assignee, date } = req.body
+  let { id, title, completed, assignee, date } = req.body
+
+  if (!title) return res.status(400).json({ error: 'El título de la subtarea es requerido.' })
+  id = id || `st-${Date.now()}-${Math.floor(Math.random()*1000)}`
 
   try {
     const db = await getDbConnection()
+    const task = await db.get('SELECT * FROM tasks WHERE id = ?', [taskId])
+    if (!task) {
+      await db.close()
+      return res.status(404).json({ error: 'Actividad no encontrada.' })
+    }
+
     await db.run(`
       INSERT INTO subtasks (id, task_id, title, completed, assignee, date)
       VALUES (?, ?, ?, ?, ?, ?)
-    `, [id, taskId, title, completed ? 1 : 0, assignee, date])
+    `, [id, taskId, title, completed ? 1 : 0, assignee || '', date || ''])
     await db.close()
-    res.status(201).json({ success: true })
+    res.status(201).json({ success: true, subtaskId: id })
   } catch (error) {
     console.error('Error creating subtask:', error)
     res.status(500).json({ error: 'Error al crear la subtarea.' })
@@ -578,12 +587,28 @@ app.delete('/api/tasks/:id/subtasks/:subtaskId', authenticateToken, async (req, 
 // POST /api/tasks/:id/comments - Add a comment
 app.post('/api/tasks/:id/comments', authenticateToken, async (req, res) => {
   const { id: taskId } = req.params
-  const { id, user, avatar, date, time, text } = req.body
+  let { id, user, avatar, date, time, text } = req.body
+
+  if (!text && typeof req.body === 'string') {
+    text = req.body
+  }
+  if (!text) return res.status(400).json({ error: 'El texto del comentario es requerido.' })
+
+  const now = new Date()
+  id = id || `c-${Date.now()}-${Math.floor(Math.random()*1000)}`
+  user = user || req.user.name || 'Administrador'
+  avatar = avatar || user.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || 'AD'
+  date = date || now.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
+  time = time || now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
 
   try {
     const db = await getDbConnection()
     const task = await db.get('SELECT * FROM tasks WHERE id = ?', [taskId])
-    
+    if (!task) {
+      await db.close()
+      return res.status(404).json({ error: 'Actividad no encontrada.' })
+    }
+
     await db.run(`
       INSERT INTO comments (id, task_id, user, avatar, date, time, text)
       VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -594,7 +619,7 @@ app.post('/api/tasks/:id/comments', authenticateToken, async (req, res) => {
       await logActivity(`Comentó en la actividad "${task.title}": "${text.substring(0, 30)}..."`, user)
     }
 
-    res.status(201).json({ success: true })
+    res.status(201).json({ success: true, commentId: id })
   } catch (error) {
     console.error('Error creating comment:', error)
     res.status(500).json({ error: 'Error al guardar el comentario.' })
@@ -607,16 +632,26 @@ app.post('/api/tasks/:id/comments', authenticateToken, async (req, res) => {
 // POST /api/tasks/:id/evidences - Add evidence link or file
 app.post('/api/tasks/:id/evidences', authenticateToken, async (req, res) => {
   const { id: taskId } = req.params
-  const { id, type, name, url, size } = req.body
+  let { id, type, name, url, size } = req.body
+
+  id = id || `ev-${Date.now()}-${Math.floor(Math.random()*1000)}`
+  type = type || 'link'
+  name = name || (url ? url.replace(/^https?:\/\//i, '') : 'Evidencia adjunta')
 
   try {
     const db = await getDbConnection()
+    const task = await db.get('SELECT * FROM tasks WHERE id = ?', [taskId])
+    if (!task) {
+      await db.close()
+      return res.status(404).json({ error: 'Actividad no encontrada.' })
+    }
+
     await db.run(`
       INSERT INTO evidences (id, task_id, type, name, url, size)
       VALUES (?, ?, ?, ?, ?, ?)
-    `, [id, taskId, type, name, url, size])
+    `, [id, taskId, type, name, url || null, size || null])
     await db.close()
-    res.status(201).json({ success: true })
+    res.status(201).json({ success: true, evidenceId: id })
   } catch (error) {
     console.error('Error creating evidence:', error)
     res.status(500).json({ error: 'Error al guardar la evidencia.' })
@@ -643,31 +678,9 @@ app.delete('/api/tasks/:id/evidences/:evidenceId', authenticateToken, async (req
 
 // GET /api/epics
 app.get('/api/epics', authenticateToken, async (req, res) => {
-  const epics = [
-    {
-      id: 'E-101',
-      title: 'Módulo de autenticación de usuarios',
-      tags: ['Backend', 'Security'],
-      progress: 65,
-      items: [
-        { id: 'E-101-1', title: 'Login con Google', status: 'En proceso' },
-        { id: 'E-101-2', title: 'Registro con Email', status: 'Completada' },
-        { id: 'E-101-3', title: 'Recuperación de contraseña', status: 'Pendiente' }
-      ]
-    },
-    {
-      id: 'E-102',
-      title: 'Módulo de administración',
-      tags: ['Frontend'],
-      progress: 30,
-      items: [
-        { id: 'E-102-1', title: 'Panel de usuarios', status: 'En proceso' },
-        { id: 'E-102-2', title: 'Gestión de roles', status: 'Pendiente' }
-      ]
-    }
-  ]
-  res.json(epics)
+  res.json([])
 })
+
 
 
 // --- WORKSPACES API ROUTES (HU-17, HU-18, HU-19, HU-20) ---

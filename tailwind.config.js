@@ -6,13 +6,13 @@ export default {
     extend: {
       colors: {
         bg: {
-          DEFAULT: '#0b0b10',
-          card: '#16161d',
-          field: '#1e1e28',
+          DEFAULT: 'var(--color-bg, #0b0b10)',
+          card: 'var(--color-bg-card, #16161d)',
+          field: 'var(--color-bg-field, #1e1e28)',
         },
         border: {
-          DEFAULT: '#212129',
-          field: '#2b2b38',
+          DEFAULT: 'var(--color-border, #212129)',
+          field: 'var(--color-border-field, #2b2b38)',
         },
         lavender: {
           DEFAULT: 'var(--color-lavender, #8b7cf6)',
@@ -20,9 +20,9 @@ export default {
           light: 'var(--color-lavender-light, #efeafe)',
         },
         text: {
-          primary: '#f2f1f7',
-          secondary: '#9a99a8',
-          muted: '#6b6a78',
+          primary: 'var(--color-text-primary, #f2f1f7)',
+          secondary: 'var(--color-text-secondary, #9a99a8)',
+          muted: 'var(--color-text-muted, #6b6a78)',
         },
         priority: {
           high: '#f0655f',
@@ -35,7 +35,7 @@ export default {
         '2xl': '18px',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', '"Outfit"', 'Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
       },
     },
   },

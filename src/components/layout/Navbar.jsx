@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
-import { LayoutGrid, Users, BarChart3, Plus, ChevronDown, Settings, LogOut, Menu, X, RotateCcw, FolderKanban } from 'lucide-react'
+import { 
+  LayoutGrid, Users, BarChart3, Plus, ChevronDown, Settings, LogOut, 
+  Menu, X, RotateCcw, FolderKanban, Sparkles, Palette, User, Check, ShieldAlert, CheckCircle2, Moon, Sun
+} from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
+import { useToast } from '../../context/ToastContext.jsx'
+import ConfirmModal from './ConfirmModal.jsx'
 
 const navItems = [
   { to: '/inicio', label: 'Tablero', icon: LayoutGrid },
@@ -11,29 +16,31 @@ const navItems = [
 ]
 
 const colorsMap = {
-  lavender: { primary: '#8b7cf6', hover: '#7c6df0', light: '#efeafe' },
-  emerald: { primary: '#10b981', hover: '#059669', light: '#ecfdf5' },
-  rose: { primary: '#f43f5e', hover: '#e11d48', light: '#fff1f2' },
-  amber: { primary: '#f59e0b', hover: '#d97706', light: '#fef3c7' }
+  lavender: { primary: '#8b7cf6', hover: '#7c6df0', light: '#efeafe', name: 'Lavanda', desc: 'Morado Vibrante Pro', hex: '#8b7cf6' },
+  emerald: { primary: '#10b981', hover: '#059669', light: '#ecfdf5', name: 'Esmeralda', desc: 'Verde Moderno & Tech', hex: '#10b981' },
+  rose: { primary: '#f43f5e', hover: '#e11d48', light: '#fff1f2', name: 'Rubí / Rosa', desc: 'Coral Intenso Dinámico', hex: '#f43f5e' },
+  amber: { primary: '#f59e0b', hover: '#d97706', light: '#fef3c7', name: 'Ámbar', desc: 'Dorado Cálido & Ágil', hex: '#f59e0b' }
 }
 
 export default function Navbar() {
   const { user, token, logout, updateProfile } = useAuth()
+  const toast = useToast()
   const [menuOpen, setMenuOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
+  const [showResetConfirm, setShowResetConfirm] = useState(false)
   
   // Settings Form States
   const [profileName, setProfileName] = useState('')
   const [profileEmail, setProfileEmail] = useState('')
   const [accentColor, setAccentColor] = useState('lavender')
+  const [themeMode, setThemeMode] = useState('dark')
   const [saveStatus, setSaveStatus] = useState({ success: false, error: '' })
   const [isResetting, setIsResetting] = useState(false)
 
   const menuRef = useRef(null)
   const navigate = useNavigate()
 
-  // Apply accent color theme
   function applyThemeColor(colorName) {
     const color = colorsMap[colorName] || colorsMap.lavender
     const root = document.documentElement
@@ -44,13 +51,26 @@ export default function Navbar() {
     setAccentColor(colorName)
   }
 
-  // Load color theme on mount
+  function applyThemeMode(mode) {
+    const root = document.documentElement
+    if (mode === 'light') {
+      root.classList.add('light')
+      root.classList.remove('dark')
+    } else {
+      root.classList.remove('light')
+      root.classList.add('dark')
+    }
+    localStorage.setItem('schoolboard_theme_mode', mode)
+    setThemeMode(mode)
+  }
+
   useEffect(() => {
     const savedColor = localStorage.getItem('schoolboard_accent_color') || 'lavender'
     applyThemeColor(savedColor)
+    const savedMode = localStorage.getItem('schoolboard_theme_mode') || 'dark'
+    applyThemeMode(savedMode)
   }, [])
 
-  // Sync profile data when settings modal opens
   useEffect(() => {
     if (isSettingsOpen && user) {
       setProfileName(user.name || '')
@@ -69,7 +89,6 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Close mobile menu on navigate
   useEffect(() => {
     setMobileMenuOpen(false)
   }, [navigate])
@@ -85,17 +104,20 @@ export default function Navbar() {
     try {
       await updateProfile({ name: profileName.trim(), email: profileEmail.trim() })
       setSaveStatus({ success: true, error: '' })
-      setTimeout(() => setSaveStatus({ success: false, error: '' }), 3000)
+      toast.success('¡Perfil de usuario guardado con éxito!', 2500)
+      setTimeout(() => setSaveStatus({ success: false, error: '' }), 3500)
     } catch (err) {
       setSaveStatus({ success: false, error: err.message || 'Error al actualizar perfil' })
+      toast.error(err.message || 'Error al actualizar perfil', 3000)
     }
   }
 
-  async function handleDatabaseReset() {
-    if (!confirm('¿Estás seguro de restablecer toda la base de datos? Se borrarán todas las actividades creadas y comentarios, regresando al estado inicial de prueba.')) {
-      return
-    }
+  function handleDatabaseReset() {
+    setShowResetConfirm(true)
+  }
 
+  async function executeDatabaseReset() {
+    setShowResetConfirm(false)
     try {
       setIsResetting(true)
       const res = await fetch('http://localhost:5000/api/auth/reset', {
@@ -106,302 +128,431 @@ export default function Navbar() {
       })
 
       if (res.ok) {
-        alert('Base de datos restablecida correctamente. La página se recargará.')
-        window.location.reload()
+        toast.success('Base de datos restablecida correctamente. Recargando...', 3000)
+        setTimeout(() => window.location.reload(), 1500)
       } else {
-        alert('Error al restablecer base de datos.')
+        toast.error('Error al restablecer base de datos.')
       }
     } catch (err) {
       console.error(err)
-      alert('Error de conexión con el backend.')
+      toast.error('Error de conexión con el backend.')
     } finally {
       setIsResetting(false)
     }
   }
 
   return (
-    <header className="border-b border-border bg-bg-card/60 backdrop-blur sticky top-0 z-30">
-      <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
-        
-        {/* Left Side: Brand and Desktop Nav */}
-        <div className="flex items-center gap-8">
-          <div 
-            onClick={() => navigate('/inicio')} 
-            className="flex items-center gap-2 cursor-pointer select-none"
-          >
-            <div className="w-8 h-8 rounded-lg bg-lavender flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-                <path d="M12 3l9 5-9 5-9-5 9-5z" stroke="white" strokeWidth="1.8" strokeLinejoin="round" />
-                <path d="M6 10.5V16c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5.5" stroke="white" strokeWidth="1.8" strokeLinejoin="round" />
-              </svg>
+    <>
+      <header className="border-b border-border bg-[#111118]/85 backdrop-blur-xl sticky top-0 z-40 shadow-sm transition-all">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+          
+          {/* Lado Izquierdo: Logo y Navegación de Escritorio */}
+          <div className="flex items-center gap-8">
+            <div 
+              onClick={() => navigate('/inicio')} 
+              className="flex items-center gap-2.5 cursor-pointer select-none group"
+            >
+              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-lavender to-lavender-hover flex items-center justify-center shadow-md shadow-lavender/30 group-hover:scale-105 group-hover:rotate-3 transition-all duration-200">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 3l9 5-9 5-9-5 9-5z" stroke="white" strokeWidth="2" strokeLinejoin="round" />
+                  <path d="M6 10.5V16c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-5.5" stroke="white" strokeWidth="2" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <div className="flex flex-col">
+                <span className="font-extrabold text-[15px] text-white tracking-wide leading-tight group-hover:text-lavender transition-colors">
+                  SchoolBoard
+                </span>
+                <span className="text-[9px] font-bold text-lavender uppercase tracking-widest leading-none">
+                  Agile Workspace
+                </span>
+              </div>
             </div>
-            <span className="font-bold text-[15px] text-text-primary tracking-wide">SchoolBoard</span>
+
+            {/* Enlaces de Navegación con Píldora Luminosa */}
+            <nav className="hidden md:flex items-center gap-1.5">
+              {navItems.map(({ to, label, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    `flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 ${
+                      isActive
+                        ? 'bg-lavender/20 text-lavender shadow-sm'
+                        : 'text-text-secondary hover:text-white hover:bg-white/5 hover:-translate-y-0.5'
+                    }`
+                  }
+                >
+                  <Icon size={16} />
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
           </div>
 
-          {/* Desktop Nav Items */}
-          <nav className="hidden md:flex items-center gap-1">
-            {navItems.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  `flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                    isActive
-                      ? 'bg-lavender/15 text-lavender'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
-                  }`
-                }
-              >
-                <Icon size={16} />
-                {label}
-              </NavLink>
-            ))}
-          </nav>
-        </div>
-
-        {/* Right Side: Create button & User dropdown & Mobile menu toggle */}
-        <div className="flex items-center gap-3">
-          
-          {/* Desktop Create Activity Button */}
-          <button 
-            onClick={() => navigate('/actividad/nueva')}
-            className="hidden sm:flex items-center gap-1.5 bg-lavender hover:bg-lavender-hover text-white text-sm font-medium px-4 py-2 rounded-lg transition-all duration-200 shadow-md"
-          >
-            <Plus size={16} />
-            Crear actividad
-          </button>
-
-          {/* User Session Dropdown */}
-          <div className="relative" ref={menuRef}>
+          {/* Lado Derecho: Botones de Acción y Usuario */}
+          <div className="flex items-center gap-3 md:gap-4">
+            
+            {/* Toggle Rápido Modo Claro / Oscuro */}
             <button
-              onClick={() => setMenuOpen((v) => !v)}
-              className="w-9 h-9 rounded-full bg-bg-field border border-border-field flex items-center justify-center text-sm font-bold text-lavender hover:border-lavender transition-all duration-200 select-none uppercase"
+              onClick={() => applyThemeMode(themeMode === 'light' ? 'dark' : 'light')}
+              title={`Cambiar a Modo ${themeMode === 'light' ? 'Oscuro' : 'Claro (Ergonomía)'}`}
+              className="p-2.5 rounded-xl bg-bg-field hover:bg-white/5 text-text-primary hover:text-lavender border border-border hover:border-white/20 transition-all duration-200 shadow-sm active:scale-90 flex items-center justify-center select-none"
             >
-              {user?.name?.[0] ?? 'A'}
+              {themeMode === 'light' ? (
+                <Moon size={18} className="text-amber-500 fill-amber-500/20" />
+              ) : (
+                <Sun size={18} className="text-amber-400 fill-amber-400/20" />
+              )}
             </button>
 
-            {menuOpen && (
-              <div className="absolute right-0 mt-2 w-56 card shadow-xl overflow-hidden py-1 z-40 bg-[#14141c]">
-                <div className="px-3.5 py-2.5 border-b border-border bg-white/[0.01]">
-                  <p className="text-xs font-bold text-text-primary">{user?.name || 'Administrador'}</p>
-                  <p className="text-[10px] text-text-secondary truncate mt-0.5">{user?.email || 'admin@schoolboard.com'}</p>
-                </div>
-                <button 
-                  onClick={() => {
-                    setIsSettingsOpen(true)
-                    setMenuOpen(false)
-                  }}
-                  className="w-full flex items-center gap-2 px-3.5 py-2.5 text-xs text-text-secondary hover:bg-white/5 hover:text-text-primary transition-all"
-                >
-                  <Settings size={14} />
-                  Configuración
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-3.5 py-2.5 text-xs text-priority-high hover:bg-priority-high/10 transition-all border-t border-border"
-                >
-                  <LogOut size={14} />
-                  Cerrar sesión
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Mobile Menu Toggle Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="flex md:hidden p-2 rounded-lg text-text-secondary hover:text-text-primary hover:bg-white/5 transition-all"
-            aria-label="Abrir menú"
-          >
-            {mobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
-          </button>
-        </div>
-      </div>
-
-      {/* Mobile Collapsible Navigation Menu */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t border-border bg-[#101017] px-6 py-4 space-y-4 animate-in slide-in-from-top duration-200">
-          <nav className="flex flex-col gap-1.5">
-            {navItems.map(({ to, label, icon: Icon }) => (
-              <NavLink
-                key={to}
-                to={to}
-                className={({ isActive }) =>
-                  `flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
-                    isActive
-                      ? 'bg-lavender/10 text-lavender'
-                      : 'text-text-secondary hover:text-text-primary hover:bg-white/5'
-                  }`
-                }
-              >
-                <Icon size={16} />
-                {label}
-              </NavLink>
-            ))}
-          </nav>
-          
-          {/* Mobile Settings Access */}
-          <button
-            onClick={() => {
-              setIsSettingsOpen(true)
-              setMobileMenuOpen(false)
-            }}
-            className="w-full flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium text-text-secondary hover:text-text-primary hover:bg-white/5 transition-all"
-          >
-            <Settings size={16} />
-            Configuración
-          </button>
-          
-          {/* Mobile-only Create Button */}
-          <div className="pt-2 border-t border-border">
-            <button
+            {/* Botón Crear Actividad Premium */}
+            <button 
               onClick={() => navigate('/actividad/nueva')}
-              className="w-full flex items-center justify-center gap-1.5 bg-lavender hover:bg-lavender-hover text-white text-sm font-semibold py-3 rounded-xl transition-all shadow-md"
+              className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-lavender to-lavender-hover text-white text-xs font-black px-4.5 py-2.5 rounded-xl transition-all duration-200 shadow-md shadow-lavender/25 hover:shadow-lg hover:shadow-lavender/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 select-none"
             >
-              <Plus size={16} />
+              <Plus size={16} strokeWidth={3} />
               Crear actividad
             </button>
+
+            {/* Botón Perfil de Usuario con Estado En Vivo */}
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setMenuOpen((v) => !v)}
+                className="flex items-center gap-2.5 pl-1.5 pr-2.5 py-1 rounded-full bg-bg-field hover:bg-white/5 border border-border hover:border-lavender/50 transition-all duration-200 shadow-sm group select-none active:scale-95"
+                title="Configuración de usuario y menú"
+              >
+                <div className="w-8 h-8 rounded-full bg-lavender/20 border border-lavender/40 flex items-center justify-center text-xs font-black text-lavender group-hover:scale-105 transition-transform relative">
+                  {user?.name?.[0] ?? 'A'}
+                  <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#111118] shadow-[0_0_6px_#34d399]" title="En línea" />
+                </div>
+                <span className="text-xs font-extrabold text-text-primary group-hover:text-white transition-colors hidden lg:inline-block truncate max-w-[110px]">
+                  {user?.name?.split(' ')[0] || 'Admin'}
+                </span>
+                <ChevronDown size={14} className={`text-text-muted group-hover:text-lavender transition-all ${menuOpen ? 'rotate-180 text-lavender' : ''}`} />
+              </button>
+
+              {/* Menú Desplegable con Animación Suave */}
+              {menuOpen && (
+                <div className="absolute right-0 mt-2.5 w-64 card shadow-2xl overflow-hidden py-1.5 z-50 bg-[#151522] border border-border/80 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-4 py-3 border-b border-border/70 bg-white/[0.02]">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_#34d399]" />
+                      <p className="text-xs font-black text-text-primary uppercase tracking-wider">Sesión Activa</p>
+                    </div>
+                    <p className="text-xs font-bold text-white mt-1 truncate">{user?.name || 'Administrador'}</p>
+                    <p className="text-[10px] font-mono text-text-secondary truncate mt-0.5">{user?.email || 'admin@schoolboard.com'}</p>
+                  </div>
+
+                  <div className="py-1">
+                    <button 
+                      onClick={() => {
+                        setIsSettingsOpen(true)
+                        setMenuOpen(false)
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-extrabold text-text-primary hover:bg-lavender/10 hover:text-lavender transition-all group"
+                    >
+                      <Settings size={15} className="text-lavender group-hover:rotate-45 transition-transform duration-300" />
+                      Configuración y Paleta de Colores
+                    </button>
+                  </div>
+
+                  <div className="pt-1 border-t border-border/70 mt-1">
+                    <button
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-3 px-4 py-2.5 text-xs font-extrabold text-priority-high hover:bg-priority-high/10 transition-all"
+                    >
+                      <LogOut size={15} />
+                      Cerrar sesión
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Menú Móvil Toggle Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="flex md:hidden p-2.5 rounded-xl text-text-secondary hover:text-white hover:bg-white/5 transition-all border border-border/60"
+              aria-label="Abrir menú"
+            >
+              {mobileMenuOpen ? <X size={20} className="text-lavender" /> : <Menu size={20} />}
+            </button>
           </div>
         </div>
-      )}
 
-      {/* Settings Modal (Overlay) */}
+        {/* Menú Colapsable Móvil */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-border bg-[#111118] px-6 py-5 space-y-4 animate-in slide-in-from-top duration-200">
+            <nav className="flex flex-col gap-2">
+              {navItems.map(({ to, label, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+                      isActive
+                        ? 'bg-lavender/20 text-lavender'
+                        : 'text-text-secondary hover:text-white hover:bg-white/5'
+                    }`
+                  }
+                >
+                  <Icon size={18} />
+                  {label}
+                </NavLink>
+              ))}
+            </nav>
+            
+            <button
+              onClick={() => {
+                setIsSettingsOpen(true)
+                setMobileMenuOpen(false)
+              }}
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold text-text-secondary hover:text-white hover:bg-white/5 transition-all border border-transparent hover:border-border"
+            >
+              <Settings size={18} className="text-lavender" />
+              Configuración y Temas
+            </button>
+            
+            <div className="pt-3 border-t border-border">
+              <button
+                onClick={() => navigate('/actividad/nueva')}
+                className="w-full flex items-center justify-center gap-2 bg-lavender hover:bg-lavender-hover text-white text-sm font-black py-3.5 rounded-xl transition-all shadow-md active:scale-95"
+              >
+                <Plus size={18} strokeWidth={3} />
+                Crear actividad
+              </button>
+            </div>
+          </div>
+        )}
+      </header>
+
+      {/* 🌟 Modal de Configuración Premium Refacturado (Sin cortes, Scroll Sólido) */}
       {isSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          {/* Backdrop */}
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6 animate-in fade-in duration-200">
+          {/* Backdrop Cristal */}
           <div 
-            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/75 backdrop-blur-md transition-opacity"
             onClick={() => setIsSettingsOpen(false)}
           />
           
-          {/* Modal Container */}
-          <div className="relative w-full max-w-md bg-[#121219] border border-border rounded-2xl shadow-2xl overflow-hidden z-10 flex flex-col">
-            {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-border">
-              <div>
-                <h3 className="font-bold text-text-primary text-sm">Configuración de Cuenta</h3>
-                <p className="text-[10px] text-text-secondary">Administra tus preferencias y datos personales.</p>
+          {/* Contenedor Modal con Flex y Scroll interno protegido */}
+          <div className="relative w-full max-w-lg bg-bg-card border border-border rounded-3xl shadow-2xl overflow-hidden z-10 flex flex-col max-h-[90vh] sm:max-h-[85vh]">
+            
+            {/* Cabecera Fija */}
+            <div className="flex items-center justify-between p-6 border-b border-border/80 bg-bg-field/40 flex-shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-lavender/15 border border-lavender/30 flex items-center justify-center text-lavender shadow-sm">
+                  <Settings size={20} className="animate-spin-slow" />
+                </div>
+                <div>
+                  <h3 className="font-extrabold text-text-primary text-base tracking-tight">Configuración de la Plataforma</h3>
+                  <p className="text-xs text-text-secondary font-medium">Personaliza tu perfil, colores del tema y base de datos.</p>
+                </div>
               </div>
               <button 
                 onClick={() => setIsSettingsOpen(false)}
-                className="p-1 rounded-lg text-text-muted hover:text-text-primary hover:bg-white/5 transition-colors"
+                className="p-2 rounded-xl text-text-muted hover:text-text-primary hover:bg-bg-field transition-colors"
+                title="Cerrar configuración"
               >
-                <X size={16} />
+                <X size={20} />
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-5 space-y-6">
+            {/* Cuerpo del Modal Deslizable (Scroll Bar Protector contra Cortes) */}
+            <div className="p-6 space-y-7 overflow-y-auto flex-1 scrollbar-thin">
               
-              {/* Profile Details Form */}
-              <form onSubmit={handleProfileSave} className="space-y-4">
-                <h4 className="text-xs font-semibold text-lavender uppercase tracking-wider">Perfil de usuario</h4>
+              {/* Sección de Perfil de Usuario */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2 text-lavender font-extrabold text-xs uppercase tracking-wider">
+                  <User size={14} />
+                  <span>Datos de Perfil</span>
+                </div>
+
+                <form onSubmit={handleProfileSave} className="bg-bg-field/40 border border-border/80 rounded-2xl p-4 space-y-4 hover:border-lavender/30 transition-colors">
+                  <div>
+                    <label className="block text-[11px] font-extrabold text-text-secondary mb-1.5">Nombre Completo</label>
+                    <input
+                      type="text"
+                      required
+                      value={profileName}
+                      onChange={(e) => setProfileName(e.target.value)}
+                      className="input-base py-2.5 text-xs font-bold"
+                      placeholder="Escribe tu nombre de usuario"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-extrabold text-text-secondary mb-1.5">Correo electrónico del Sistema</label>
+                    <input
+                      type="email"
+                      required
+                      value={profileEmail}
+                      onChange={(e) => setProfileEmail(e.target.value)}
+                      className="input-base py-2.5 text-xs font-mono"
+                      placeholder="correo@ejemplo.com"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between pt-2">
+                    {saveStatus.success && (
+                      <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-400 animate-in fade-in">
+                        <CheckCircle2 size={15} />
+                        ¡Guardado y sincronizado!
+                      </span>
+                    )}
+                    {saveStatus.error && (
+                      <span className="text-xs font-bold text-priority-high">{saveStatus.error}</span>
+                    )}
+                    
+                    {/* Botón Guardar Perfil Seguro e Imposible de Cortarse */}
+                    <button
+                      type="submit"
+                      className="ml-auto px-5 py-2.5 bg-lavender hover:bg-lavender-hover text-white rounded-xl text-xs font-extrabold transition-all shadow-md shadow-lavender/20 hover:shadow-lg active:scale-95 flex items-center gap-1.5 select-none"
+                    >
+                      <Check size={14} strokeWidth={3} />
+                      Guardar perfil
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Selector de Paleta de Colores Inteligente */}
+              <div className="space-y-4 pt-4 border-t border-border/60">
+                <div className="flex items-center gap-2 text-lavender font-extrabold text-xs uppercase tracking-wider">
+                  <Palette size={14} />
+                  <span>Color de Acento de la App</span>
+                </div>
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  Selecciona la paleta que guiará todos los botones, tarjetas Kanban e indicadores luminosos.
+                </p>
                 
-                <div>
-                  <label className="block text-[10px] font-semibold text-text-secondary mb-1.5">Nombre</label>
-                  <input
-                    type="text"
-                    required
-                    value={profileName}
-                    onChange={(e) => setProfileName(e.target.value)}
-                    className="input-base py-2 text-xs"
-                  />
+                {/* Rejilla de Tarjetas de Color Premium */}
+                <div className="grid grid-cols-2 gap-3 pt-1">
+                  {Object.entries(colorsMap).map(([key, item]) => {
+                    const isSelected = accentColor === key
+                    return (
+                      <button
+                        key={key}
+                        type="button"
+                        onClick={() => applyThemeColor(key)}
+                        className={`flex items-center gap-3 p-3 rounded-2xl border text-left transition-all duration-200 select-none group ${
+                          isSelected
+                            ? 'bg-lavender/15 border-lavender shadow-md shadow-lavender/15 scale-[1.02]'
+                            : 'bg-bg-field/40 border-border/70 hover:bg-bg-field hover:border-white/20'
+                        }`}
+                      >
+                        <div 
+                          className="w-8 h-8 rounded-xl border-2 flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110 shadow-md"
+                          style={{ backgroundColor: item.hex, borderColor: isSelected ? '#ffffff' : 'rgba(255,255,255,0.2)' }}
+                        >
+                          {isSelected && <Check size={14} className="text-white drop-shadow-md stroke-[3]" />}
+                        </div>
+                        <div className="truncate">
+                          <p className="text-xs font-black text-text-primary truncate">{item.name}</p>
+                          <p className="text-[10px] font-medium text-text-secondary truncate mt-0.5">{item.desc}</p>
+                        </div>
+                      </button>
+                    )
+                  })}
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-[10px] font-semibold text-text-secondary mb-1.5">Correo electrónico</label>
-                  <input
-                    type="email"
-                    required
-                    value={profileEmail}
-                    onChange={(e) => setProfileEmail(e.target.value)}
-                    className="input-base py-2 text-xs"
-                  />
+              {/* Selector de Modo de Iluminación (Ergonomía y Cansancio Visual) */}
+              <div className="space-y-4 pt-4 border-t border-border/60">
+                <div className="flex items-center gap-2 text-lavender font-extrabold text-xs uppercase tracking-wider">
+                  <Sun size={14} />
+                  <span>Modo de Iluminación (Ergonomía Visual)</span>
                 </div>
+                <p className="text-xs text-text-secondary leading-relaxed">
+                  Alterna entre el Modo Oscuro para concentración nocturna o el Modo Claro, ideado para reducir el cansancio visual en largas sesiones de trabajo diurnas.
+                </p>
 
-                <div className="flex items-center justify-between pt-1">
-                  {saveStatus.success && <p className="text-[10px] text-priority-low font-semibold">¡Perfil guardado con éxito!</p>}
-                  {saveStatus.error && <p className="text-[10px] text-priority-high font-semibold">{saveStatus.error}</p>}
+                <div className="grid grid-cols-2 gap-3 pt-1">
                   <button
-                    type="submit"
-                    className="ml-auto px-4 py-2 bg-lavender hover:bg-lavender-hover text-white rounded-lg text-xs font-semibold transition-colors"
-                  >
-                    Guardar perfil
-                  </button>
-                </div>
-              </form>
-
-              {/* Accent Color customizer */}
-              <div className="space-y-3 pt-4 border-t border-border">
-                <h4 className="text-xs font-semibold text-lavender uppercase tracking-wider">Color de acento de la App</h4>
-                <p className="text-[10px] text-text-secondary">Cambia instantáneamente la paleta de colores activa.</p>
-                
-                <div className="flex items-center gap-3 pt-1">
-                  {/* Lavender */}
-                  <button
-                    onClick={() => applyThemeColor('lavender')}
-                    className={`w-8 h-8 rounded-full border bg-[#8b7cf6] transition-all flex items-center justify-center ${
-                      accentColor === 'lavender' ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-80 hover:opacity-100'
+                    type="button"
+                    onClick={() => applyThemeMode('dark')}
+                    className={`flex items-center gap-3 p-3 rounded-2xl border text-left transition-all duration-200 select-none ${
+                      themeMode === 'dark'
+                        ? 'bg-lavender/15 border-lavender shadow-md shadow-lavender/15 scale-[1.02]'
+                        : 'bg-bg-field/40 border-border/70 hover:bg-bg-field hover:border-white/20'
                     }`}
-                    title="Lavanda"
                   >
-                    {accentColor === 'lavender' && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    <div className="w-8 h-8 rounded-xl bg-slate-900 text-amber-400 border border-slate-700 flex items-center justify-center flex-shrink-0 shadow-inner">
+                      <Moon size={16} className="fill-amber-400/20" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-white">Modo Oscuro</p>
+                      <p className="text-[10px] font-medium text-text-secondary mt-0.5">Predeterminado</p>
+                    </div>
                   </button>
 
-                  {/* Emerald */}
                   <button
-                    onClick={() => applyThemeColor('emerald')}
-                    className={`w-8 h-8 rounded-full border bg-[#10b981] transition-all flex items-center justify-center ${
-                      accentColor === 'emerald' ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-80 hover:opacity-100'
+                    type="button"
+                    onClick={() => applyThemeMode('light')}
+                    className={`flex items-center gap-3 p-3 rounded-2xl border text-left transition-all duration-200 select-none ${
+                      themeMode === 'light'
+                        ? 'bg-lavender/15 border-lavender shadow-md shadow-lavender/15 scale-[1.02]'
+                        : 'bg-bg-field/40 border-border/70 hover:bg-bg-field hover:border-white/20'
                     }`}
-                    title="Esmeralda"
                   >
-                    {accentColor === 'emerald' && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </button>
-
-                  {/* Rose */}
-                  <button
-                    onClick={() => applyThemeColor('rose')}
-                    className={`w-8 h-8 rounded-full border bg-[#f43f5e] transition-all flex items-center justify-center ${
-                      accentColor === 'rose' ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-80 hover:opacity-100'
-                    }`}
-                    title="Rosa/Rubí"
-                  >
-                    {accentColor === 'rose' && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
-                  </button>
-
-                  {/* Amber */}
-                  <button
-                    onClick={() => applyThemeColor('amber')}
-                    className={`w-8 h-8 rounded-full border bg-[#f59e0b] transition-all flex items-center justify-center ${
-                      accentColor === 'amber' ? 'border-white scale-110 shadow-lg' : 'border-transparent opacity-80 hover:opacity-100'
-                    }`}
-                    title="Ámbar"
-                  >
-                    {accentColor === 'amber' && <span className="w-1.5 h-1.5 rounded-full bg-white" />}
+                    <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-500 border border-amber-200 flex items-center justify-center flex-shrink-0 shadow-inner">
+                      <Sun size={16} className="animate-pulse fill-amber-300/40" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-white">Modo Claro</p>
+                      <p className="text-[10px] font-medium text-text-secondary mt-0.5">Ergonomía Día</p>
+                    </div>
                   </button>
                 </div>
               </div>
 
-              {/* Maintenance Tools */}
-              <div className="space-y-2.5 pt-4 border-t border-border">
-                <h4 className="text-xs font-semibold text-priority-high uppercase tracking-wider">Herramientas del sistema</h4>
-                <p className="text-[10px] text-text-secondary">Restablece la aplicación a su estado inicial de prueba.</p>
+              {/* Herramientas de Sistema y Restablecimiento */}
+              <div className="space-y-3 pt-4 border-t border-border/60">
+                <div className="flex items-center gap-2 text-priority-high font-extrabold text-xs uppercase tracking-wider">
+                  <ShieldAlert size={14} />
+                  <span>Herramientas de Mantenimiento</span>
+                </div>
+                <p className="text-xs text-text-secondary">
+                  Restablece toda la base de datos de actividades y comentarios a su estado de prueba original.
+                </p>
                 
                 <button
                   type="button"
                   onClick={handleDatabaseReset}
                   disabled={isResetting}
-                  className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-priority-high/10 border border-priority-high/20 hover:bg-priority-high/15 text-priority-high text-xs font-semibold rounded-xl transition-all disabled:opacity-50"
+                  className="w-full flex items-center justify-center gap-2 py-3 bg-priority-high/10 border border-priority-high/30 hover:bg-priority-high text-priority-high hover:text-white font-extrabold text-xs rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 select-none"
                 >
-                  <RotateCcw size={14} />
-                  {isResetting ? 'Restableciendo...' : 'Restablecer Base de Datos'}
+                  <RotateCcw size={15} />
+                  {isResetting ? 'Restableciendo Base de Datos...' : 'Restablecer Base de Datos'}
                 </button>
               </div>
             </div>
+
+            {/* Pie del Modal Anclado (Garantizado sin Cortes) */}
+            <div className="p-5 border-t border-border/80 bg-bg-field/40 flex justify-end gap-3 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsSettingsOpen(false)}
+                className="w-full sm:w-auto px-8 py-3 bg-lavender hover:bg-lavender-hover text-white font-black text-xs rounded-xl shadow-lg shadow-lavender/25 transition-all duration-200 active:scale-[0.98] select-none flex items-center justify-center gap-2"
+              >
+                <Check size={16} strokeWidth={3} />
+                Listo y Cerrar Configuración
+              </button>
+            </div>
+
           </div>
         </div>
       )}
-    </header>
+
+      {/* Modal de Confirmación sin Alertas Nativas */}
+      <ConfirmModal
+        isOpen={showResetConfirm}
+        title="Restablecer Base de Datos"
+        message="¿Estás seguro de restablecer toda la base de datos? Se borrarán todas las actividades creadas y comentarios, regresando al estado inicial de prueba."
+        confirmText="Sí, restablecer"
+        onConfirm={executeDatabaseReset}
+        onCancel={() => setShowResetConfirm(false)}
+      />
+    </>
   )
 }

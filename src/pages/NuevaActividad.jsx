@@ -1,48 +1,43 @@
-import { useState } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ChevronLeft, Plus, Trash2, Link2, Calendar, Clock, ArrowUp, Minus, ArrowDown } from 'lucide-react'
+import { useState, useMemo } from 'react'
+import { useNavigate, useSearchParams, Link } from 'react-router-dom'
+import { ChevronLeft, Plus, Trash2, Link2, Calendar, Clock, ArrowUp, Minus, ArrowDown, FolderKanban, Users, Sparkles } from 'lucide-react'
 import { useTasks } from '../context/TaskContext.jsx'
-import { epics as epicsMock, teams } from '../data/mockData.js'
 
 export default function NuevaActividad() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { addTask } = useTasks()
+  const { addTask, workspaces, teamMembers, epics, allTasks } = useTasks()
 
-  // Default column from URL if available (e.g. ?col=proceso)
   const defaultCol = searchParams.get('col') || 'pendiente'
+  const defaultWorkspace = searchParams.get('workspace') || (workspaces?.[0]?.name) || 'Espacio General'
 
-  // Form states
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [project, setProject] = useState('Backend Wizards')
+  const [project, setProject] = useState(defaultWorkspace)
   const [epic, setEpic] = useState('')
   const [userStory, setUserStory] = useState('')
-  const [assignee, setAssignee] = useState('Sin asignar')
-  const [date, setDate] = useState('')
-  const [priority, setPriority] = useState('high') // High by default to match screenshot
+  const [assignee, setAssignee] = useState(() => teamMembers?.[0]?.name || 'Administrador')
+  const [date, setDate] = useState(() => new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0])
+  const [priority, setPriority] = useState('medium')
   const [status, setStatus] = useState(defaultCol)
-  const [evidences, setEvidences] = useState([
-    { id: '1', url: 'https://confluence.backendwizards.com/docs/auth-jwt' },
-    { id: '2', url: 'https://github.com/backend-wizards/auth-service/pull/123' }
-  ])
+  const [evidences, setEvidences] = useState([]) // 100% limpio por defecto
 
-  // Lists for dropdowns
-  const projectOptions = ['Backend Wizards', 'Frontend Ninjas']
-  const responsibleOptions = [
-    'Sin asignar',
-    'Carlos Olaya Gutierres',
-    'Kevin Armando Montalvo Marcial',
-    'Francisco Xavier Gil Ginez',
-    'Emmanuel Castro Salvador',
-    'Ana Pérez',
-    'Juan Sánchez',
-    'Administrador'
-  ]
+  // Listado dinámico en vivo de tus Espacios y Compañeros
+  const projectOptions = useMemo(() => {
+    const spaceNames = workspaces.map(w => w.name)
+    const existing = new Set(['Espacio General', ...spaceNames])
+    allTasks.forEach(t => { if (t.project) existing.add(t.project) })
+    return Array.from(existing)
+  }, [workspaces, allTasks])
+
+  const responsibleOptions = useMemo(() => {
+    const memberNames = teamMembers.map(m => m.name)
+    return Array.from(new Set(['Sin asignar', ...memberNames]))
+  }, [teamMembers])
   
-  const epicOptions = epicsMock.map(e => `${e.id} ${e.title}`)
+  const epicOptions = epics.map(e => `${e.id} ${e.title}`)
   const userStoryOptions = epic
-    ? epicsMock.find(e => epic.startsWith(e.id))?.items.map(item => item.title) || []
+    ? epics.find(e => epic.startsWith(e.id))?.items?.map(item => item.title) || []
     : []
 
   const statusOptions = [
@@ -68,7 +63,6 @@ export default function NuevaActividad() {
     e.preventDefault()
     if (!title.trim()) return
 
-    // Prepare evidence array
     const formattedEvidences = evidences
       .filter(e => e.url.trim() !== '')
       .map(e => ({
@@ -78,12 +72,11 @@ export default function NuevaActividad() {
         url: e.url
       }))
 
-    // Save task via Context
     addTask(status, {
       title,
-      description,
-      details: description, // Default detail is same as description
-      project,
+      description: description || title,
+      details: description || `Actividad vinculada al espacio: ${project}`,
+      project: project || 'Espacio General',
       epic,
       userStory,
       assignee,
@@ -95,36 +88,37 @@ export default function NuevaActividad() {
       comments: []
     })
 
-    // Go back to board
     navigate('/inicio')
   }
 
   return (
-    <div className="max-w-5xl mx-auto">
-      {/* Header with Back Button */}
-      <div className="flex items-center gap-4 mb-6">
-        <button
-          onClick={() => navigate('/inicio')}
-          className="w-10 h-10 rounded-xl border border-border bg-bg-card/50 flex items-center justify-center text-text-secondary hover:text-text-primary hover:bg-white/5 transition-all"
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <div>
-          <h1 className="text-xl font-semibold text-text-primary">Registrar nueva actividad</h1>
-          <p className="text-sm text-text-secondary mt-0.5">
-            Completa la información para crear y asignar una nueva actividad a tu proyecto.
-          </p>
+    <div className="max-w-4xl mx-auto animate-in fade-in duration-300 pb-12">
+      <div className="flex items-center justify-between mb-8 pb-5 border-b border-border/70">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => navigate('/inicio')}
+            className="w-11 h-11 rounded-2xl border border-white/10 bg-white/5 flex items-center justify-center text-white hover:bg-lavender/20 transition-all shadow-md active:scale-95"
+          >
+            <ChevronLeft size={22} />
+          </button>
+          <div>
+            <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5">
+              <Sparkles size={24} className="text-lavender" />
+              Registrar Nueva Actividad
+            </h1>
+            <p className="text-xs text-text-secondary mt-1">
+              Vincúlala a uno de tus <strong>Espacios de Trabajo</strong> y asígnala a cualquier <strong>Compañero</strong> de tu equipo.
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Form Card */}
-      <form onSubmit={handleSubmit} className="card p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Left Column */}
-          <div className="space-y-5">
-            {/* Título */}
+      <form onSubmit={handleSubmit} className="card p-8 space-y-8 bg-[#141420]/90 border border-white/10 rounded-3xl shadow-2xl relative">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          
+          <div className="space-y-6">
             <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-2">
+              <label className="block text-xs font-black uppercase tracking-wider text-text-secondary mb-2">
                 Título de la actividad <span className="text-priority-high">*</span>
               </label>
               <input
@@ -132,273 +126,275 @@ export default function NuevaActividad() {
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="input-base"
-                placeholder="Ej. Implementar autenticación JWT"
+                className="input-base py-3 font-bold text-white bg-[#101018] text-base shadow-inner"
+                placeholder="Ej. Diseño de base de datos para la escuela..."
+                autoFocus
               />
             </div>
 
-            {/* Descripción */}
             <div>
-              <div className="flex justify-between text-xs font-semibold text-text-secondary mb-2">
-                <span>Descripción <span className="text-priority-high">*</span></span>
+              <div className="flex justify-between text-xs font-black text-text-secondary mb-2 uppercase tracking-wider">
+                <span>Descripción o Instrucciones</span>
                 <span className="text-text-muted">{description.length}/500</span>
               </div>
               <textarea
-                required
                 maxLength={500}
                 rows={5}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="input-base resize-none"
-                placeholder="Implementar autenticación basada en JWT para proteger los endpoints de la API."
+                className="input-base resize-none py-3 font-medium text-text-secondary bg-[#101018]"
+                placeholder="Detalles sobre qué se debe realizar en este pendiente..."
               />
             </div>
 
-            {/* Responsable */}
             <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-2">
-                Responsable <span className="text-priority-high">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-black uppercase tracking-wider text-lavender flex items-center gap-1.5">
+                  <Users size={14} />
+                  Responsable (Compañero) *
+                </label>
+                <Link to="/equipos" className="text-[11px] text-emerald-400 hover:underline font-extrabold flex items-center gap-1">
+                  + Agregar compañero
+                </Link>
+              </div>
               <select
                 value={assignee}
                 onChange={(e) => setAssignee(e.target.value)}
-                className="input-base cursor-pointer appearance-none bg-no-repeat"
+                className="input-base py-3 text-sm font-bold text-white bg-[#101018] cursor-pointer appearance-none bg-no-repeat border-white/10 hover:border-lavender/50"
                 style={{
-                  backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239a99a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                  backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%238b7cf6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
                   backgroundPosition: 'right 14px center',
                   backgroundSize: '16px'
                 }}
               >
                 {responsibleOptions.map((opt) => (
-                  <option key={opt} value={opt} className="bg-bg-card text-text-primary">
-                    {opt}
+                  <option key={opt} value={opt} className="bg-[#101018] text-white font-bold">
+                    👤 {opt}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Prioridad */}
             <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-3">
-                Prioridad <span className="text-priority-high">*</span>
+              <label className="block text-xs font-black uppercase tracking-wider text-text-secondary mb-3">
+                Prioridad de la Tarea <span className="text-priority-high">*</span>
               </label>
-              <div className="flex gap-3">
-                {/* Alta */}
+              <div className="grid grid-cols-3 gap-3">
                 <button
                   type="button"
                   onClick={() => setPriority('high')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                  className={`flex items-center justify-center gap-1.5 py-3 rounded-2xl border text-xs font-black transition-all ${
                     priority === 'high'
-                      ? 'bg-priority-high/10 border-priority-high text-priority-high'
-                      : 'border-border-field text-text-secondary hover:text-text-primary hover:bg-white/5'
+                      ? 'bg-priority-high/20 border-priority-high text-priority-high shadow-md shadow-priority-high/20 scale-[1.02]'
+                      : 'border-white/10 text-text-secondary hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <ArrowUp size={14} />
+                  <ArrowUp size={15} strokeWidth={3} />
                   Alta
                 </button>
-                {/* Media */}
                 <button
                   type="button"
                   onClick={() => setPriority('medium')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                  className={`flex items-center justify-center gap-1.5 py-3 rounded-2xl border text-xs font-black transition-all ${
                     priority === 'medium'
-                      ? 'bg-priority-medium/10 border-priority-medium text-priority-medium'
-                      : 'border-border-field text-text-secondary hover:text-text-primary hover:bg-white/5'
+                      ? 'bg-priority-medium/20 border-priority-medium text-priority-medium shadow-md shadow-priority-medium/20 scale-[1.02]'
+                      : 'border-white/10 text-text-secondary hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <Minus size={14} />
+                  <Minus size={15} strokeWidth={3} />
                   Media
                 </button>
-                {/* Baja */}
                 <button
                   type="button"
                   onClick={() => setPriority('low')}
-                  className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                  className={`flex items-center justify-center gap-1.5 py-3 rounded-2xl border text-xs font-black transition-all ${
                     priority === 'low'
-                      ? 'bg-priority-low/10 border-priority-low text-priority-low'
-                      : 'border-border-field text-text-secondary hover:text-text-primary hover:bg-white/5'
+                      ? 'bg-priority-low/20 border-priority-low text-priority-low shadow-md shadow-priority-low/20 scale-[1.02]'
+                      : 'border-white/10 text-text-secondary hover:text-white hover:bg-white/5'
                   }`}
                 >
-                  <ArrowDown size={14} />
+                  <ArrowDown size={15} strokeWidth={3} />
                   Baja
                 </button>
               </div>
             </div>
           </div>
 
-          {/* Right Column */}
-          <div className="space-y-5">
-            {/* Proyecto o equipo */}
+          <div className="space-y-6">
             <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-2">
-                Proyecto o equipo <span className="text-priority-high">*</span>
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="text-xs font-black uppercase tracking-wider text-lavender flex items-center gap-1.5">
+                  <FolderKanban size={14} />
+                  Espacio de Trabajo / Proyecto *
+                </label>
+                <Link to="/espacios" className="text-[11px] text-lavender hover:underline font-extrabold flex items-center gap-1">
+                  + Crear Espacio
+                </Link>
+              </div>
               <select
                 value={project}
                 onChange={(e) => setProject(e.target.value)}
-                className="input-base cursor-pointer appearance-none bg-no-repeat"
+                className="input-base py-3 text-sm font-extrabold text-lavender bg-[#101018] cursor-pointer appearance-none bg-no-repeat border-white/10 hover:border-lavender/50"
                 style={{
-                  backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239a99a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                  backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%238b7cf6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
                   backgroundPosition: 'right 14px center',
                   backgroundSize: '16px'
                 }}
               >
                 {projectOptions.map((opt) => (
-                  <option key={opt} value={opt} className="bg-bg-card text-text-primary">
-                    {opt}
+                  <option key={opt} value={opt} className="bg-[#101018] text-white font-extrabold">
+                    📁 {opt}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Épica */}
             <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-2">Épica</label>
+              <label className="block text-xs font-black uppercase tracking-wider text-text-secondary mb-2">Vincular con Épica (Opcional)</label>
               <select
                 value={epic}
                 onChange={(e) => {
                   setEpic(e.target.value)
                   setUserStory('')
                 }}
-                className="input-base cursor-pointer appearance-none bg-no-repeat"
+                className="input-base py-3 text-xs font-bold text-white bg-[#101018] cursor-pointer appearance-none bg-no-repeat"
                 style={{
                   backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239a99a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
                   backgroundPosition: 'right 14px center',
                   backgroundSize: '16px'
                 }}
               >
-                <option value="" className="bg-bg-card text-text-muted">Seleccionar épica</option>
+                <option value="" className="bg-[#101018] text-text-muted">Ningún epic seleccionado</option>
                 {epicOptions.map((opt) => (
-                  <option key={opt} value={opt} className="bg-bg-card text-text-primary">
-                    {opt}
+                  <option key={opt} value={opt} className="bg-[#101018] text-white font-semibold">
+                    ⚡ {opt}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Historia de usuario */}
             <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-2">Historia de usuario</label>
+              <label className="block text-xs font-black uppercase tracking-wider text-text-secondary mb-2">Historia de Usuario Asignada</label>
               <select
                 value={userStory}
                 onChange={(e) => setUserStory(e.target.value)}
-                disabled={!epic}
-                className="input-base cursor-pointer appearance-none bg-no-repeat disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={!epic || userStoryOptions.length === 0}
+                className="input-base py-3 text-xs font-bold text-white bg-[#101018] cursor-pointer appearance-none bg-no-repeat disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{
                   backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239a99a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
                   backgroundPosition: 'right 14px center',
                   backgroundSize: '16px'
                 }}
               >
-                <option value="" className="bg-bg-card text-text-muted">Seleccionar historia</option>
+                <option value="" className="bg-[#101018] text-text-muted">Seleccionar historia del epic</option>
                 {userStoryOptions.map((opt) => (
-                  <option key={opt} value={opt} className="bg-bg-card text-text-primary">
-                    {opt}
+                  <option key={opt} value={opt} className="bg-[#101018] text-white">
+                    📖 {opt}
                   </option>
                 ))}
               </select>
             </div>
 
-            {/* Fecha límite */}
-            <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-2">
-                Fecha límite <span className="text-priority-high">*</span>
-              </label>
-              <input
-                type="date"
-                required
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="input-base"
-              />
-            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-text-secondary mb-2">
+                  Fecha límite *
+                </label>
+                <input
+                  type="date"
+                  required
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="input-base py-2.5 bg-[#101018] font-bold text-white text-xs cursor-pointer"
+                />
+              </div>
 
-            {/* Estado inicial */}
-            <div>
-              <label className="block text-xs font-semibold text-text-secondary mb-2">
-                Estado inicial <span className="text-priority-high">*</span>
-              </label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="input-base cursor-pointer appearance-none bg-no-repeat"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239a99a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
-                  backgroundPosition: 'right 14px center',
-                  backgroundSize: '16px'
-                }}
-              >
-                {statusOptions.map((opt) => (
-                  <option key={opt.id} value={opt.id} className="bg-bg-card text-text-primary">
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+              <div>
+                <label className="block text-xs font-black uppercase tracking-wider text-text-secondary mb-2">
+                  Columna / Estado *
+                </label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="input-base py-2.5 bg-[#101018] font-black text-white text-xs cursor-pointer appearance-none bg-no-repeat uppercase"
+                  style={{
+                    backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%239a99a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
+                    backgroundPosition: 'right 12px center',
+                    backgroundSize: '14px'
+                  }}
+                >
+                  {statusOptions.map((opt) => (
+                    <option key={opt.id} value={opt.id} className="bg-[#101018] text-white font-black uppercase">
+                      {opt.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Enlace o URL de evidencia */}
-        <div className="border-t border-border pt-5">
-          <div>
-            <h3 className="text-sm font-semibold text-text-primary mb-1">
-              Enlace o URL de evidencia <span className="text-text-muted font-normal">(opcional)</span>
-            </h3>
-            <p className="text-xs text-text-secondary mb-3">
-              Agrega uno o más enlaces que respalden el trabajo de esta actividad.
-            </p>
+        <div className="border-t border-white/10 pt-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-black text-white flex items-center gap-2">
+                <Link2 size={16} className="text-lavender" />
+                Enlaces de Evidencia o Referencia (Opcional)
+              </h3>
+              <p className="text-xs text-text-secondary mt-0.5">
+                Adjunta documentos de Google Drive, GitHub, o links con material de apoyo para tu compañero.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleAddEvidence}
+              className="flex items-center gap-1.5 bg-lavender/10 hover:bg-lavender text-lavender hover:text-white transition-all text-xs font-extrabold px-4 py-2 rounded-xl border border-lavender/30 shadow-sm"
+            >
+              <Plus size={14} strokeWidth={3} />
+              + Añadir link
+            </button>
           </div>
 
-          <div className="space-y-3 mb-4">
+          <div className="space-y-3">
             {evidences.map((evidence) => (
               <div key={evidence.id} className="flex items-center gap-3">
                 <div className="relative flex-1">
-                  <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted">
-                    <Link2 size={15} />
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">
+                    <Link2 size={16} />
                   </div>
                   <input
                     type="url"
                     value={evidence.url}
                     onChange={(e) => handleEvidenceChange(evidence.id, e.target.value)}
-                    className="input-base pl-10"
-                    placeholder="https://docs.example.com/document"
+                    className="input-base pl-11 py-2.5 bg-[#101018] font-medium text-white text-xs"
+                    placeholder="https://docs.google.com/..."
                   />
                 </div>
                 <button
                   type="button"
                   onClick={() => handleRemoveEvidence(evidence.id)}
-                  className="p-3 bg-white/[0.02] border border-border hover:bg-priority-high/10 text-text-secondary hover:text-priority-high rounded-xl transition-colors"
+                  className="p-3 bg-white/5 border border-white/10 hover:bg-priority-high/20 text-text-secondary hover:text-priority-high rounded-xl transition-all"
                 >
                   <Trash2 size={16} />
                 </button>
               </div>
             ))}
           </div>
-
-          <button
-            type="button"
-            onClick={handleAddEvidence}
-            className="flex items-center gap-2 border border-lavender/30 text-lavender hover:bg-lavender/5 transition-all text-xs font-semibold px-4 py-2.5 rounded-xl"
-          >
-            <Plus size={15} />
-            Agregar enlace
-          </button>
         </div>
 
-        {/* Form Actions Footer */}
-        <div className="border-t border-border pt-5 flex items-center justify-end gap-3">
+        <div className="border-t border-white/10 pt-6 flex items-center justify-end gap-4">
           <button
             type="button"
             onClick={() => navigate('/inicio')}
-            className="px-5 py-2.5 rounded-xl border border-border text-sm font-semibold text-text-secondary hover:text-text-primary hover:bg-white/5 transition-colors"
+            className="px-6 py-3 rounded-2xl border border-white/10 text-xs font-black text-text-secondary hover:text-white hover:bg-white/10 transition-all"
           >
-            Cancelar
+            Cancelar y volver
           </button>
           <button
             type="submit"
-            className="px-5 py-2.5 rounded-xl bg-lavender hover:bg-lavender-hover text-sm font-semibold text-white transition-colors"
+            className="px-8 py-3 rounded-2xl bg-gradient-to-r from-lavender to-emerald-500 hover:opacity-95 text-xs font-black text-white shadow-xl shadow-lavender/25 transition-all active:scale-95 hover:-translate-y-0.5"
           >
-            Guardar actividad
+            ✓ Guardar y Asignar Actividad
           </button>
         </div>
       </form>

@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Paperclip, UploadCloud, Plus, Trash2, MoreVertical, Check, AlertCircle } from 'lucide-react'
 import { useTasks } from '../../context/TaskContext.jsx'
-import { teams, epics as epicsMock } from '../../data/mockData.js'
 
 export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
-  const { getTaskById, updateTask, deleteEvidence, addEvidenceFile, addSubtask, toggleSubtask, deleteSubtask, updateSubtask } = useTasks()
+  const { getTaskById, updateTask, deleteEvidence, addEvidenceFile, addSubtask, toggleSubtask, deleteSubtask, updateSubtask, teamMembers, epics } = useTasks()
   const task = getTaskById(taskId)
   const drawerRef = useRef(null)
 
@@ -56,22 +55,13 @@ export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
 
   if (!isOpen || !task) return null
 
-  // Dropdown list options
-  const responsibleOptions = [
-    'Sin asignar',
-    'Carlos Olaya Gutierres',
-    'Kevin Armando Montalvo Marcial',
-    'Francisco Xavier Gil Ginez',
-    'Emmanuel Castro Salvador',
-    'Ana Pérez',
-    'Juan Sánchez',
-    'Administrador'
-  ]
+  // Opciones en vivo procedentes del Directorio de Compañeros de Equipos
+  const responsibleOptions = Array.from(new Set(['Sin asignar', ...(teamMembers?.map(m => m.name) || [])]))
   
-  // Available epics and stories mapping
-  const availableEpics = epicsMock.map(e => `${e.id} ${e.title}`)
+  // Epics reales sincronizados
+  const availableEpics = (epics || []).map(e => `${e.id} ${e.title}`)
   const userStoryOptions = epic
-    ? epicsMock.find(e => epic.startsWith(e.id))?.items.map(item => item.title) || []
+    ? (epics || []).find(e => epic.startsWith(e.id))?.items?.map(item => item.title) || []
     : []
 
   function handleSave(e) {
@@ -399,9 +389,7 @@ export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
                     <div className="relative group/menu">
                       <button 
                         type="button"
-                        onClick={() => {
-                          if (confirm('¿Eliminar esta subtarea?')) deleteSubtask(taskId, st.id)
-                        }}
+                        onClick={() => deleteSubtask(taskId, st.id)}
                         className="p-1 rounded text-text-muted hover:text-priority-high opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <Trash2 size={13} />
