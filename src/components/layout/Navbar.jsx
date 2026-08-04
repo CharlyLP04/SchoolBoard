@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { 
   LayoutGrid, Users, BarChart3, Plus, ChevronDown, Settings, LogOut, 
-  Menu, X, RotateCcw, FolderKanban, Sparkles, Palette, User, Check, ShieldAlert, CheckCircle2, Moon, Sun
+  Menu, X, RotateCcw, FolderKanban, Sparkles, Palette, User, Check, ShieldAlert, CheckCircle2, Moon, Sun, Bell, CheckCheck, Calendar, Flame, ShieldCheck
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useToast } from '../../context/ToastContext.jsx'
@@ -29,6 +29,46 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [showResetConfirm, setShowResetConfirm] = useState(false)
+  const [notifOpen, setNotifOpen] = useState(false)
+  const [notifications, setNotifications] = useState([
+    {
+      id: 1,
+      title: '¡Nueva Épica Registrada!',
+      desc: 'Se ha vinculado un nuevo sprint en el tablero ágil.',
+      time: 'Hace 3 min',
+      read: false,
+      type: 'epic',
+      link: '/inicio'
+    },
+    {
+      id: 2,
+      title: 'Protección Ocular Activa',
+      desc: 'Norma ergonómica WCAG aplicada en modo noche.',
+      time: 'Hace 15 min',
+      read: false,
+      type: 'system',
+      link: '/inicio'
+    },
+    {
+      id: 3,
+      title: 'Avance en Checklist',
+      desc: 'Actividad superó el 67% en la barra de progreso.',
+      time: 'Hace 1 hora',
+      read: true,
+      type: 'progress',
+      link: '/inicio'
+    },
+    {
+      id: 4,
+      title: 'Reportes y KPI Listos',
+      desc: 'Gráficas de rendimiento listas para consulta y exportación.',
+      time: 'Hace 2 horas',
+      read: true,
+      type: 'report',
+      link: '/reportes'
+    }
+  ])
+  const notifRef = useRef(null)
   
   // Settings Form States
   const [profileName, setProfileName] = useState('')
@@ -83,6 +123,9 @@ export default function Navbar() {
     function handleClickOutside(e) {
       if (menuRef.current && !menuRef.current.contains(e.target)) {
         setMenuOpen(false)
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target)) {
+        setNotifOpen(false)
       }
     }
     document.addEventListener('mousedown', handleClickOutside)
@@ -204,6 +247,130 @@ export default function Navbar() {
                 <Sun size={18} className="text-amber-400 fill-amber-400/20" />
               )}
             </button>
+
+            {/* 🔔 Centro de Notificaciones Animado */}
+            <div className="relative" ref={notifRef}>
+              <button
+                onClick={() => setNotifOpen((v) => !v)}
+                title="Centro de Notificaciones en Vivo"
+                className="p-2.5 rounded-xl bg-bg-field hover:bg-white/5 text-text-primary hover:text-lavender border border-border hover:border-lavender/40 transition-all duration-200 shadow-sm active:scale-90 flex items-center justify-center select-none group relative"
+              >
+                <Bell size={18} className={`transition-transform duration-300 ${notifications.some(n => !n.read) ? 'group-hover:rotate-12 text-lavender' : 'text-text-secondary'}`} />
+                {notifications.some(n => !n.read) && (
+                  <>
+                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-priority-high rounded-full animate-ping opacity-75 pointer-events-none" />
+                    <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-priority-high border-2 border-[#111118] rounded-full flex items-center justify-center text-[8px] font-black text-white shadow-sm pointer-events-none">
+                      {notifications.filter(n => !n.read).length}
+                    </span>
+                  </>
+                )}
+              </button>
+
+              {/* Panel Desplegable de Notificaciones con Micro-animaciones */}
+              {notifOpen && (
+                <div className="absolute right-0 mt-2.5 w-80 sm:w-96 card shadow-2xl overflow-hidden z-50 bg-[#151522]/98 border border-border/90 backdrop-blur-2xl animate-in fade-in zoom-in-95 duration-200">
+                  {/* Encabezado del Panel */}
+                  <div className="px-4.5 py-3.5 border-b border-border/70 bg-white/[0.02] flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-lg bg-lavender/20 border border-lavender/40 flex items-center justify-center text-lavender shadow-sm">
+                        <Bell size={15} className="animate-pulse" />
+                      </div>
+                      <div>
+                        <h4 className="text-xs font-black text-white tracking-wide uppercase">Notificaciones</h4>
+                        <p className="text-[10px] font-medium text-text-secondary">
+                          {notifications.filter(n => !n.read).length === 0 
+                            ? 'Todo al día' 
+                            : `${notifications.filter(n => !n.read).length} pendientes de lectura`}
+                        </p>
+                      </div>
+                    </div>
+                    {notifications.some(n => !n.read) && (
+                      <button
+                        onClick={() => {
+                          setNotifications(prev => prev.map(n => ({ ...n, read: true })))
+                          toast.info('Notificaciones marcadas como leídas', 2000)
+                        }}
+                        className="text-[10px] font-extrabold text-lavender hover:text-white px-2.5 py-1 rounded-lg bg-lavender/10 hover:bg-lavender transition-all flex items-center gap-1 active:scale-95 shadow-sm"
+                        title="Marcar todo como leído"
+                      >
+                        <CheckCheck size={13} />
+                        Marcar leídas
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Lista con scroll suave */}
+                  <div className="max-h-[360px] overflow-y-auto divide-y divide-border/40 custom-scrollbar">
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center text-text-muted text-xs">
+                        No tienes notificaciones pendientes.
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n.id}
+                          onClick={() => {
+                            setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, read: true } : item))
+                            setNotifOpen(false)
+                            navigate(n.link)
+                          }}
+                          className={`p-4 flex items-start gap-3.5 transition-all duration-200 cursor-pointer group relative ${
+                            n.read ? 'hover:bg-white/[0.02] opacity-80 hover:opacity-100' : 'bg-lavender/[0.04] hover:bg-lavender/[0.08]'
+                          }`}
+                        >
+                          {/* Indicador de no leído izquierdo */}
+                          {!n.read && (
+                            <span className="absolute top-4 left-1.5 w-1.5 h-1.5 rounded-full bg-lavender shadow-[0_0_8px_#8b7cf6]" />
+                          )}
+
+                          {/* Ícono según tipo */}
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm transition-transform group-hover:scale-105 ${
+                            n.type === 'epic' ? 'bg-emerald-500/15 border border-emerald-500/30 text-emerald-400' :
+                            n.type === 'progress' ? 'bg-amber-500/15 border border-amber-500/30 text-amber-400' :
+                            n.type === 'report' ? 'bg-cyan-500/15 border border-cyan-500/30 text-cyan-400' :
+                            'bg-lavender/15 border border-lavender/30 text-lavender'
+                          }`}>
+                            {n.type === 'epic' && <Flame size={17} />}
+                            {n.type === 'progress' && <Calendar size={17} />}
+                            {n.type === 'report' && <BarChart3 size={17} />}
+                            {n.type === 'system' && <ShieldCheck size={17} />}
+                          </div>
+
+                          {/* Textos */}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 mb-0.5">
+                              <h5 className={`text-xs font-extrabold truncate ${n.read ? 'text-text-primary' : 'text-white font-black'}`}>
+                                {n.title}
+                              </h5>
+                              <span className="text-[10px] text-text-muted flex-shrink-0 font-medium">
+                                {n.time}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-text-secondary leading-snug line-clamp-2">
+                              {n.desc}
+                            </p>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Pie del Panel */}
+                  <div className="p-2.5 border-t border-border/70 bg-white/[0.02] flex items-center justify-between text-[11px]">
+                    <button
+                      onClick={() => {
+                        setNotifOpen(false)
+                        navigate('/inicio')
+                      }}
+                      className="w-full py-1.5 text-center font-bold text-text-secondary hover:text-lavender transition-colors rounded-lg hover:bg-white/5 flex items-center justify-center gap-1.5"
+                    >
+                      <Sparkles size={13} className="text-lavender" />
+                      Ir al Tablero Principal de Actividades
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Botón Crear Actividad Premium */}
             <button 
