@@ -57,7 +57,7 @@ export function TaskProvider({ children }) {
   const fetchTasks = useCallback(async () => {
     if (!token) return
     try {
-      const res = await fetch('http://localhost:5000/api/tasks', {
+      const res = await fetch('https://schoolboard-server.onrender.com/api/tasks', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
@@ -75,7 +75,7 @@ export function TaskProvider({ children }) {
   const fetchEpics = useCallback(async () => {
     if (!token) return
     try {
-      const res = await fetch('http://localhost:5000/api/epics', {
+      const res = await fetch('https://schoolboard-server.onrender.com/api/epics', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
@@ -94,7 +94,7 @@ export function TaskProvider({ children }) {
   const fetchWorkspaces = useCallback(async () => {
     if (!token) return
     try {
-      const res = await fetch('http://localhost:5000/api/workspaces', {
+      const res = await fetch('https://schoolboard-server.onrender.com/api/workspaces', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
@@ -164,7 +164,7 @@ export function TaskProvider({ children }) {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/api/tasks', {
+      const res = await fetch('https://schoolboard-server.onrender.com/api/tasks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -200,7 +200,7 @@ export function TaskProvider({ children }) {
     }
 
     try {
-      const res = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
+      const res = await fetch(`https://schoolboard-server.onrender.com/api/tasks/${taskId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -221,7 +221,7 @@ export function TaskProvider({ children }) {
 
   const deleteTask = useCallback(async (taskId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/tasks/${taskId}`, {
+      const res = await fetch(`https://schoolboard-server.onrender.com/api/tasks/${taskId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -267,7 +267,7 @@ export function TaskProvider({ children }) {
       newCols[destColIndex] = { ...newCols[destColIndex], tasks: newDestTasks }
 
       // Persistir cambio
-      fetch(`http://localhost:5000/api/tasks/${updatedTask.id}`, {
+      fetch(`https://schoolboard-server.onrender.com/api/tasks/${updatedTask.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -290,7 +290,7 @@ export function TaskProvider({ children }) {
     const subtaskId = `st-${Date.now()}-${Math.floor(Math.random()*1000)}`
     const subtaskDate = date || new Date().toISOString().split('T')[0]
     try {
-      const res = await fetch(`http://localhost:5000/api/tasks/${taskId}/subtasks`, {
+      const res = await fetch(`https://schoolboard-server.onrender.com/api/tasks/${taskId}/subtasks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -312,7 +312,7 @@ export function TaskProvider({ children }) {
 
   const toggleSubtask = useCallback(async (taskId, subtaskId, currentCompleted) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/tasks/${taskId}/subtasks/${subtaskId}`, {
+      const res = await fetch(`https://schoolboard-server.onrender.com/api/tasks/${taskId}/subtasks/${subtaskId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -328,7 +328,7 @@ export function TaskProvider({ children }) {
 
   const updateSubtask = useCallback(async (taskId, subtaskId, newTitle) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/tasks/${taskId}/subtasks/${subtaskId}`, {
+      const res = await fetch(`https://schoolboard-server.onrender.com/api/tasks/${taskId}/subtasks/${subtaskId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -344,7 +344,7 @@ export function TaskProvider({ children }) {
 
   const deleteSubtask = useCallback(async (taskId, subtaskId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/tasks/${taskId}/subtasks/${subtaskId}`, {
+      const res = await fetch(`https://schoolboard-server.onrender.com/api/tasks/${taskId}/subtasks/${subtaskId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -384,7 +384,7 @@ export function TaskProvider({ children }) {
         }
       }
 
-      const res = await fetch(`http://localhost:5000/api/tasks/${taskId}/comments`, {
+      const res = await fetch(`https://schoolboard-server.onrender.com/api/tasks/${taskId}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -408,7 +408,7 @@ export function TaskProvider({ children }) {
     try {
       const evidenceId = `ev-${Date.now()}-${Math.floor(Math.random()*1000)}`
       const linkName = name || url.replace(/^https?:\/\//i, '')
-      const res = await fetch(`http://localhost:5000/api/tasks/${taskId}/evidences`, {
+      const res = await fetch(`https://schoolboard-server.onrender.com/api/tasks/${taskId}/evidences`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -431,7 +431,7 @@ export function TaskProvider({ children }) {
   const addEvidenceFile = useCallback(async (taskId, fileName, fileSize) => {
     try {
       const evidenceId = `ev-${Date.now()}-${Math.floor(Math.random()*1000)}`
-      const res = await fetch(`http://localhost:5000/api/tasks/${taskId}/evidences`, {
+      const res = await fetch(`https://schoolboard-server.onrender.com/api/tasks/${taskId}/evidences`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -453,7 +453,7 @@ export function TaskProvider({ children }) {
 
   const deleteEvidence = useCallback(async (taskId, evidenceId) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/tasks/${taskId}/evidences/${evidenceId}`, {
+      const res = await fetch(`https://schoolboard-server.onrender.com/api/tasks/${taskId}/evidences/${evidenceId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })

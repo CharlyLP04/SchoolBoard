@@ -163,7 +163,7 @@ export default function Navbar() {
     setShowResetConfirm(false)
     try {
       setIsResetting(true)
-      const res = await fetch('http://localhost:5000/api/auth/reset', {
+      const res = await fetch('https://schoolboard-server.onrender.com/api/auth/reset', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

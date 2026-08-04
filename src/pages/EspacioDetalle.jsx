@@ -7,7 +7,7 @@ import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 import ConfirmModal from '../components/layout/ConfirmModal.jsx'
 
-const API = 'http://localhost:5000/api'
+const API = 'https://schoolboard-server.onrender.com/api'
 
 function ListColumn({ list, token, onChanged }) {
   const toast = useToast()

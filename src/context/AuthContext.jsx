@@ -23,7 +23,7 @@ export function AuthProvider({ children }) {
   // Inicia sesión llamando al backend real
   async function login({ email, password }) {
     try {
-      const res = await fetch('http://localhost:5000/api/auth/login', {
+      const res = await fetch('https://schoolboard-server.onrender.com/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ export function AuthProvider({ children }) {
   // Registro de usuario (HU-15)
   async function register({ name, email, password }) {
     try {
-      const res = await fetch('http://localhost:5000/api/auth/register', {
+      const res = await fetch('https://schoolboard-server.onrender.com/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
@@ -77,7 +77,7 @@ export function AuthProvider({ children }) {
 
   // Solicitar recuperación de contraseña (HU-16)
   async function forgotPassword({ email }) {
-    const res = await fetch('http://localhost:5000/api/auth/forgot-password', {
+    const res = await fetch('https://schoolboard-server.onrender.com/api/auth/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -89,7 +89,7 @@ export function AuthProvider({ children }) {
 
   // Establecer nueva contraseña con el token recibido (HU-16)
   async function resetPassword({ token, newPassword }) {
-    const res = await fetch('http://localhost:5000/api/auth/reset-password', {
+    const res = await fetch('https://schoolboard-server.onrender.com/api/auth/reset-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, newPassword }),
@@ -101,7 +101,7 @@ export function AuthProvider({ children }) {
 
   async function updateProfile({ name, email }) {
     try {
-      const res = await fetch('http://localhost:5000/api/auth/profile', {
+      const res = await fetch('https://schoolboard-server.onrender.com/api/auth/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
