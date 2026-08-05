@@ -296,12 +296,10 @@ function CreateEpicModal({ isOpen, onClose, onCreateEpic }) {
   )
 }
 
-function TeamDetailModal({ team, isOpen, onClose, allTasks, onUpdateTeam, onDeleteTeam, teamMembers, onAddMemberToPool }) {
+function TeamDetailModal({ team, isOpen, onClose, allTasks, onUpdateTeam, onDeleteTeam, teamMembers, onAddMemberToPool, workspaces = [] }) {
   const toast = useToast()
   const navigate = useNavigate()
   const [newMemberName, setNewMemberName] = useState('')
-  const [editingVelocity, setEditingVelocity] = useState(team?.velocity || 40)
-  const [isEditingVel, setIsEditingVel] = useState(false)
 
   if (!isOpen || !team) return null
 
@@ -313,7 +311,6 @@ function TeamDetailModal({ team, isOpen, onClose, allTasks, onUpdateTeam, onDele
     if (!newMemberName.trim()) return
     const updated = [...membersList, newMemberName.trim()]
     onUpdateTeam({ ...team, members: updated.length, memberNames: updated })
-    // Agregar también al directorio general si no está
     if (onAddMemberToPool) {
       onAddMemberToPool({ name: newMemberName.trim(), role: `Miembro de ${team.name}` })
     }
@@ -331,75 +328,89 @@ function TeamDetailModal({ team, isOpen, onClose, allTasks, onUpdateTeam, onDele
     toast.info(`Miembro removido de ${team.name}`, 2000)
   }
 
-  function handleSaveVelocity() {
-    onUpdateTeam({ ...team, velocity: Number(editingVelocity) || team.velocity })
-    setIsEditingVel(false)
-    toast.success('Velocidad de puntos del equipo actualizada con éxito', 2000)
+  function handleUpdateField(field, value) {
+    onUpdateTeam({ ...team, [field]: value })
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
       <div className="absolute inset-0 bg-black/75 backdrop-blur-md transition-opacity" onClick={onClose} />
-      <div className="relative w-full max-w-2xl bg-[#141422] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col z-10 max-h-[85vh]">
+      <div className="relative w-full max-w-2xl bg-[#141422] border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col z-10 max-h-[88vh]">
         
-        <div className="flex items-start justify-between p-6 border-b border-border bg-[#161626]">
-          <div>
-            <div className="flex items-center gap-2.5">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]"></span>
-              <h3 className="text-lg font-extrabold text-white">{team.name}</h3>
+        <div className="flex items-center justify-between p-6 border-b border-border bg-[#161626]">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-lavender/20 text-lavender flex items-center justify-center font-black border border-lavender/40 shadow-sm">
+              ⚙️
             </div>
-            <p className="text-xs text-text-secondary mt-1 flex items-center gap-1.5">
-              <FolderKanban size={14} className="text-lavender" />
-              Espacio Vinculado: <span className="text-lavender font-extrabold">{team.project}</span>
-            </p>
+            <div>
+              <h3 className="text-base font-extrabold text-white">Configuración del Grupo de Trabajo</h3>
+              <p className="text-xs text-text-secondary">Modifica el nombre, espacio asignado, velocidad e integrantes.</p>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button 
-              onClick={() => { onDeleteTeam(team.id); onClose(); }} 
-              className="p-2 rounded-xl text-priority-high hover:bg-priority-high/20 transition-colors flex items-center gap-1.5 text-xs font-extrabold border border-transparent hover:border-priority-high/40"
-              title="Disolver y eliminar este equipo"
-            >
-              <Trash2 size={15} />
-            </button>
-            <button onClick={onClose} className="p-2 rounded-xl text-text-muted hover:text-white hover:bg-white/10 transition-colors">
-              <X size={18} />
-            </button>
-          </div>
+          <button onClick={onClose} className="p-2 rounded-xl text-text-muted hover:text-white hover:bg-white/10 transition-colors">
+            <X size={18} />
+          </button>
         </div>
 
-        <div className="p-6 overflow-y-auto space-y-6 flex-1 scrollbar-thin">
-          <div className="grid grid-cols-3 gap-3">
-            <div className="bg-bg-field/50 border border-white/5 p-3.5 rounded-2xl text-center relative group">
-              <p className="text-[10px] text-text-muted uppercase font-black">Desempeño y Ritmo</p>
-              {isEditingVel ? (
-                <div className="flex items-center justify-center gap-1 mt-1">
-                  <input
-                    type="number"
-                    value={editingVelocity}
-                    onChange={(e) => setEditingVelocity(e.target.value)}
-                    className="w-16 bg-bg-card border border-lavender rounded px-2 py-0.5 text-center text-sm font-black text-white outline-none"
-                    autoFocus
-                  />
-                  <button onClick={handleSaveVelocity} className="p-1 bg-lavender/20 text-lavender rounded hover:bg-lavender hover:text-white">
-                    <Check size={14} />
-                  </button>
-                </div>
-              ) : (
-                <p 
-                  onClick={() => { setEditingVelocity(team.velocity); setIsEditingVel(true); }}
-                  className="text-lg font-black text-lavender mt-0.5 cursor-pointer hover:underline"
+        <div className="p-6 overflow-y-auto space-y-5 flex-1 scrollbar-thin">
+          
+          {/* Edición Rápida de Datos Principales */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-bg-field/40 p-4 rounded-2xl border border-white/5">
+            <div>
+              <label className="block text-xs font-extrabold text-lavender uppercase tracking-wider mb-1.5">Nombre del Equipo *</label>
+              <input
+                type="text"
+                value={team.name || ''}
+                onChange={(e) => handleUpdateField('name', e.target.value)}
+                placeholder="Ej. Equipo de QA, Frontend..."
+                className="input-base py-2 font-bold text-white bg-[#101018]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-extrabold text-lavender uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                <FolderKanban size={13} /> Espacio Vinculado (Proyecto)
+              </label>
+              {workspaces.length > 0 ? (
+                <select
+                  value={team.project || 'Espacio General'}
+                  onChange={(e) => handleUpdateField('project', e.target.value)}
+                  className="input-base py-2 font-bold text-emerald-400 bg-[#101018] cursor-pointer"
                 >
-                  {team.velocity} pts ✎
-                </p>
+                  <option value="Espacio General">🌐 Espacio General (Global)</option>
+                  {workspaces.map(ws => (
+                    <option key={ws.id} value={ws.name}>📁 {ws.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  type="text"
+                  value={team.project || ''}
+                  onChange={(e) => handleUpdateField('project', e.target.value)}
+                  placeholder="Espacio o proyecto..."
+                  className="input-base py-2 font-bold text-emerald-400 bg-[#101018]"
+                />
               )}
             </div>
-            <div className="bg-bg-field/50 border border-white/5 p-3.5 rounded-2xl text-center">
-              <p className="text-[10px] text-text-muted uppercase font-black">Sprint Activo</p>
-              <p className="text-lg font-black text-white mt-0.5">{team.sprint || 'Sprint 1'}</p>
+            <div>
+              <label className="block text-xs font-extrabold text-text-secondary uppercase tracking-wider mb-1.5">Ritmo / Velocidad (Puntos de Sprint)</label>
+              <div className="flex items-center gap-2">
+                <input
+                  type="number"
+                  value={team.velocity || 40}
+                  onChange={(e) => handleUpdateField('velocity', Number(e.target.value) || 0)}
+                  className="input-base py-2 w-32 text-center font-black text-white bg-[#101018]"
+                />
+                <span className="text-xs font-bold text-text-muted">pts por sprint</span>
+              </div>
             </div>
-            <div className="bg-bg-field/50 border border-white/5 p-3.5 rounded-2xl text-center">
-              <p className="text-[10px] text-text-muted uppercase font-black">Tareas en Tablero</p>
-              <p className="text-lg font-black text-emerald-400 mt-0.5">{teamTasks.length} actividades</p>
+            <div>
+              <label className="block text-xs font-extrabold text-text-secondary uppercase tracking-wider mb-1.5">Sprint Activo</label>
+              <input
+                type="text"
+                value={team.sprint || 'Sprint 1'}
+                onChange={(e) => handleUpdateField('sprint', e.target.value)}
+                className="input-base py-2 font-bold text-white bg-[#101018]"
+              />
             </div>
           </div>
 
@@ -486,12 +497,23 @@ function TeamDetailModal({ team, isOpen, onClose, allTasks, onUpdateTeam, onDele
 
         </div>
 
-        <div className="p-5 border-t border-border bg-[#161626] flex justify-end">
+        <div className="p-5 border-t border-border bg-[#161626] flex items-center justify-between gap-3 flex-wrap">
+          <button 
+            onClick={() => { onDeleteTeam(team.id); onClose(); }} 
+            className="px-4 py-2.5 bg-priority-high/20 hover:bg-priority-high text-priority-high hover:text-white rounded-xl font-extrabold text-xs flex items-center gap-2 transition-all shadow-sm active:scale-95"
+            title="Disolver y eliminar definitivamente este equipo"
+          >
+            <Trash2 size={16} />
+            🗑️ Eliminar Grupo de Trabajo
+          </button>
           <button
-            onClick={onClose}
+            onClick={() => {
+              toast.success('Cambios en el equipo guardados con éxito', 2000)
+              onClose()
+            }}
             className="px-6 py-2.5 bg-lavender hover:bg-lavender-hover text-white rounded-xl text-xs font-black transition-all active:scale-95 shadow-md"
           >
-            Guardar y Cerrar
+            Guardar Configuración y Cerrar
           </button>
         </div>
       </div>
@@ -499,24 +521,36 @@ function TeamDetailModal({ team, isOpen, onClose, allTasks, onUpdateTeam, onDele
   )
 }
 
-function TeamCard({ team, onOpenDetails }) {
+function TeamCard({ team, onOpenDetails, onDeleteTeam }) {
   return (
     <div 
-      className="card p-6 flex-1 min-w-[300px] hover:border-lavender/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-lavender/15 group flex flex-col justify-between cursor-pointer rounded-3xl bg-[#141420]/80 border border-white/10" 
+      className="card p-6 flex-1 min-w-[300px] hover:border-lavender/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-lavender/15 group flex flex-col justify-between cursor-pointer rounded-3xl bg-[#141420]/80 border border-white/10 relative" 
       onClick={() => onOpenDetails(team)}
     >
       <div>
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <h3 className="font-black text-base text-white group-hover:text-lavender transition-colors">{team.name}</h3>
-            <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-lavender bg-lavender/10 border border-lavender/20 px-2.5 py-1 rounded-lg mt-1.5">
-              <FolderKanban size={13} />
-              {team.project || 'Espacio General'}
+        <div className="flex items-start justify-between gap-2 mb-4">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-black text-base text-white group-hover:text-lavender transition-colors truncate">{team.name}</h3>
+            <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-lavender bg-lavender/10 border border-lavender/20 px-2.5 py-1 rounded-lg mt-1.5 truncate max-w-full">
+              <FolderKanban size={13} className="flex-shrink-0" />
+              <span className="truncate">{team.project || 'Espacio General'}</span>
             </span>
           </div>
-          <span className="text-xs text-lavender bg-lavender/10 group-hover:bg-lavender group-hover:text-white px-3.5 py-1.5 rounded-xl font-extrabold transition-all duration-200 shadow-sm">
-            Configurar ⚙️
-          </span>
+          <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => onOpenDetails(team)}
+              className="text-xs text-lavender bg-lavender/10 hover:bg-lavender hover:text-white px-3 py-1.5 rounded-xl font-extrabold transition-all duration-200 shadow-sm flex items-center gap-1 active:scale-95"
+            >
+              Configurar ⚙️
+            </button>
+            <button
+              onClick={() => onDeleteTeam(team.id)}
+              title="Eliminar grupo de trabajo"
+              className="p-2 text-text-muted hover:text-white bg-white/5 hover:bg-priority-high rounded-xl transition-all shadow-sm flex items-center justify-center active:scale-90 border border-white/5 hover:border-transparent"
+            >
+              <Trash2 size={15} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -550,6 +584,7 @@ function TeamCard({ team, onOpenDetails }) {
     </div>
   )
 }
+
 
 function EpicRow({ epic, onAddItem, onToggleItemStatus, forceOpenState, onDeleteEpic }) {
   const [localOpen, setLocalOpen] = useState(false)
@@ -849,7 +884,7 @@ export default function Equipos() {
         {teams.length > 0 ? (
           <div className="flex flex-wrap gap-5">
             {teams.map((team) => (
-              <TeamCard key={team.id} team={team} onOpenDetails={(t) => setSelectedTeam(t)} />
+              <TeamCard key={team.id} team={team} onOpenDetails={(t) => setSelectedTeam(t)} onDeleteTeam={deleteTeam} />
             ))}
           </div>
         ) : (
@@ -931,14 +966,18 @@ export default function Equipos() {
       />
 
       <TeamDetailModal
-        team={selectedTeam}
+        team={teams.find(t => t.id === selectedTeam?.id) || selectedTeam}
         isOpen={!!selectedTeam}
         onClose={() => setSelectedTeam(null)}
         allTasks={allTasks}
-        onUpdateTeam={updateTeam}
+        onUpdateTeam={(updated) => {
+          updateTeam(updated)
+          setSelectedTeam(updated)
+        }}
         onDeleteTeam={deleteTeam}
         teamMembers={teamMembers}
         onAddMemberToPool={addTeamMember}
+        workspaces={workspaces}
       />
 
       <CreateSquadModal
