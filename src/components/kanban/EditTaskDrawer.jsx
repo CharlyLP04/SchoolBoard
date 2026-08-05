@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { X, Paperclip, UploadCloud, Plus, Trash2, Check, ArrowUp, Minus, ArrowDown, Calendar, User, Layers, BookOpen, Clock, FileText, Sparkles, CheckCircle2, ListTodo } from 'lucide-react'
 import { useTasks } from '../../context/TaskContext.jsx'
+import { useToast } from '../../context/ToastContext.jsx'
 
 export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
+  const toast = useToast()
   const { getTaskById, updateTask, deleteEvidence, addEvidenceFile, addSubtask, toggleSubtask, deleteSubtask, teamMembers, epics } = useTasks()
   const task = getTaskById(taskId)
   const drawerRef = useRef(null)
@@ -67,6 +69,17 @@ export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
   function handleSave(e) {
     if (e) e.preventDefault()
     
+    const todayStr = new Date().toISOString().split('T')[0]
+    if (date && date < todayStr && date !== task?.date) {
+      toast.error('🚫 ¡Fecha Bloqueada! No puedes cambiar la fecha a una fecha vencida o en el pasado.', 5000)
+      return
+    }
+
+    if (status === 'completada' && (!task.evidences || task.evidences.length === 0)) {
+      toast.error('🚫 ¡Regla de Calidad! No puedes cambiar el estado a "Completada" sin antes subir al menos una evidencia de trabajo en este panel.', 5500)
+      return
+    }
+
     updateTask(taskId, {
       title,
       assignee,
@@ -92,6 +105,11 @@ export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
   function handleAddSubtaskSubmit(e) {
     e.preventDefault()
     if (!newSubtaskTitle.trim()) return
+    const todayStr = new Date().toISOString().split('T')[0]
+    if (newSubtaskDate && newSubtaskDate < todayStr) {
+      toast.error('🚫 No se permiten fechas de vencimiento en el pasado para las subtareas.', 4500)
+      return
+    }
     addSubtask(taskId, newSubtaskTitle.trim(), newSubtaskDate)
     setNewSubtaskTitle('')
     setNewSubtaskDate('')
@@ -193,6 +211,7 @@ export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
                 </label>
                 <input
                   type="date"
+                  min={new Date().toISOString().split('T')[0]}
                   required
                   value={date}
                   onChange={(e) => setDate(e.target.value)}
@@ -494,11 +513,11 @@ export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
                 />
                 <div className="flex gap-2">
                   <input
-                    type="text"
-                    placeholder="Fecha (Ej. 18/08/2026)"
+                    type="date"
+                    min={new Date().toISOString().split('T')[0]}
                     value={newSubtaskDate}
                     onChange={(e) => setNewSubtaskDate(e.target.value)}
-                    className="input-base py-2 px-3 text-xs font-medium bg-[#161622]"
+                    className="input-base py-2 px-3 text-xs font-medium bg-[#161622] cursor-pointer"
                   />
                 </div>
                 <div className="flex gap-2 justify-end pt-1">

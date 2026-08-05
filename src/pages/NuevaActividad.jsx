@@ -2,8 +2,10 @@ import { useState, useMemo } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { ChevronLeft, Plus, Trash2, Link2, Calendar, Clock, ArrowUp, Minus, ArrowDown, FolderKanban, Users, Sparkles } from 'lucide-react'
 import { useTasks } from '../context/TaskContext.jsx'
+import { useToast } from '../context/ToastContext.jsx'
 
 export default function NuevaActividad() {
+  const toast = useToast()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const { addTask, workspaces, teamMembers, epics, allTasks } = useTasks()
@@ -63,6 +65,12 @@ export default function NuevaActividad() {
     e.preventDefault()
     if (!title.trim()) return
 
+    const todayStr = new Date().toISOString().split('T')[0]
+    if (date && date < todayStr) {
+      toast.error('🚫 ¡Fecha Bloqueada! No se permite seleccionar fechas de vencimiento en el pasado. Elige la fecha actual o posterior.', 5000)
+      return
+    }
+
     const formattedEvidences = evidences
       .filter(e => e.url.trim() !== '')
       .map(e => ({
@@ -71,6 +79,11 @@ export default function NuevaActividad() {
         name: e.url,
         url: e.url
       }))
+
+    if (status === 'completada' && formattedEvidences.length === 0) {
+      toast.error('🚫 ¡Regla de Calidad! No puedes registrar la actividad como "Completada" sin añadir al menos un enlace de evidencia de trabajo.', 5500)
+      return
+    }
 
     addTask(status, {
       title,
@@ -302,6 +315,7 @@ export default function NuevaActividad() {
                 </label>
                 <input
                   type="date"
+                  min={new Date().toISOString().split('T')[0]}
                   required
                   value={date}
                   onChange={(e) => setDate(e.target.value)}

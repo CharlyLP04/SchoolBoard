@@ -142,6 +142,17 @@ export function TaskProvider({ children }) {
 
   // Crear una nueva tarea con conexión a su Espacio (project) y Compañero responsable (assignee)
   const addTask = useCallback(async (columnId, taskData) => {
+    const todayStr = new Date().toISOString().split('T')[0]
+    if (taskData.date && taskData.date < todayStr) {
+      toast.error('🚫 ¡Fecha Bloqueada! No es posible registrar actividades con fecha de vencimiento atrasada o en el pasado.', 5000)
+      return false
+    }
+
+    if (columnId === 'completada' && (!taskData.evidences || taskData.evidences.length === 0)) {
+      toast.error('🚫 ¡Acceso Bloqueado! No se puede crear la actividad como "Completada" sin al menos una Evidencia adjunta.', 5000)
+      return false
+    }
+
     const taskId = `t-${Date.now()}`
     const nowStr = new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })
     const timeStr = new Date().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })
@@ -189,13 +200,25 @@ export function TaskProvider({ children }) {
     const payload = typeof idOrObj === 'object' ? { ...idOrObj } : { ...(updatedFields || {}) }
     if (!payload.id) payload.id = taskId
 
-    // Regla de negocio: si cambia a revisión o completada, verificar evidencias
+    const currentTask = getTaskById(taskId)
+    const todayStr = new Date().toISOString().split('T')[0]
+    if (payload.date && payload.date < todayStr && payload.date !== currentTask?.date) {
+      toast.error('🚫 ¡Fecha Bloqueada! No se permite asignar fechas de vencimiento pasadas o ya vencidas.', 5000)
+      return false
+    }
+
+    // Regla de negocio estricta: si cambia a completada, DEBE tener evidencias. Si no, ¡SE BLOQUEA!
     const targetStatus = payload.status
-    if (targetStatus === 'completada' || targetStatus === 'revision') {
-      const currentTask = getTaskById(taskId)
+    if (targetStatus === 'completada') {
       const evs = payload.evidences || currentTask?.evidences || []
       if (evs.length === 0) {
-        toast.warning(`⚠️ Regla de negocio: Actividad cambiada a "${targetStatus === 'completada' ? 'Completada' : 'En revisión'}" sin enlace de evidencia adjunto.`, 4500)
+        toast.error('🚫 ¡Acceso Bloqueado! Para marcar la actividad como "Completada" es obligatorio adjuntar al menos una Evidencia de trabajo (archivo o enlace).', 5500)
+        return false // BLOQUEA el cambio de estado
+      }
+    } else if (targetStatus === 'revision') {
+      const evs = payload.evidences || currentTask?.evidences || []
+      if (evs.length === 0) {
+        toast.warning('⚠️ Regla de negocio: Actividad cambiada a "En revisión" sin enlace de evidencia adjunto.', 4500)
       }
     }
 
@@ -250,10 +273,16 @@ export function TaskProvider({ children }) {
       const sourceTask = newCols[sourceColIndex].tasks[source.index]
       if (!sourceTask) return prev
 
-      if (destination.droppableId === 'completada' || destination.droppableId === 'revision') {
+      if (destination.droppableId === 'completada') {
         const evs = sourceTask.evidences || []
         if (evs.length === 0) {
-          toast.warning(`⚠️ Regla de negocio: Has movido a "${destination.droppableId === 'completada' ? 'Completada' : 'En revisión'}" una actividad sin enlace de evidencia adjunto.`, 4500)
+          toast.error('🚫 ¡Acceso Bloqueado! No puedes mover la actividad a "Completada" sin antes adjuntar una Evidencia de trabajo (archivo o enlace).', 5500)
+          return prev // CANCELA EL MOVIMIENTO Y DEJA LA TARJETA EN SU COLUMNA ORIGINAL
+        }
+      } else if (destination.droppableId === 'revision') {
+        const evs = sourceTask.evidences || []
+        if (evs.length === 0) {
+          toast.warning('⚠️ Regla de negocio: Has movido a "En revisión" una actividad sin enlace de evidencia adjunto.', 4500)
         }
       }
 
