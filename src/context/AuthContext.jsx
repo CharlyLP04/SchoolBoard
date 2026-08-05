@@ -5,18 +5,17 @@ const AuthContext = createContext(null)
 const SESSION_KEY = 'schoolboard_session'
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [user, setUser] = useState(() => {
+    try {
+      const stored = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY)
+      return stored ? JSON.parse(stored) : null
+    } catch {
+      return null
+    }
+  })
+  const [isLoading, setIsLoading] = useState(false)
 
   useEffect(() => {
-    const stored = sessionStorage.getItem(SESSION_KEY)
-    if (stored) {
-      try {
-        setUser(JSON.parse(stored))
-      } catch {
-        sessionStorage.removeItem(SESSION_KEY)
-      }
-    }
     setIsLoading(false)
   }, [])
 
@@ -37,7 +36,7 @@ export function AuthProvider({ children }) {
         throw new Error(data.error || 'Credenciales incorrectas')
       }
 
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(data))
+      localStorage.setItem(SESSION_KEY, JSON.stringify(data))
       setUser(data)
       return data
     } catch (error) {
@@ -47,6 +46,7 @@ export function AuthProvider({ children }) {
   }
 
   function logout() {
+    localStorage.removeItem(SESSION_KEY)
     sessionStorage.removeItem(SESSION_KEY)
     setUser(null)
   }
@@ -66,7 +66,7 @@ export function AuthProvider({ children }) {
         throw new Error(data.error || 'No se pudo completar el registro')
       }
 
-      sessionStorage.setItem(SESSION_KEY, JSON.stringify(data))
+      localStorage.setItem(SESSION_KEY, JSON.stringify(data))
       setUser(data)
       return data
     } catch (error) {

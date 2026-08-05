@@ -8,17 +8,33 @@ export function TaskProvider({ children }) {
   const { token, user } = useAuth()
   const toast = useToast()
   
-  // Estado de Columnas Kanban
-  const [columns, setColumns] = useState([
-    { id: 'pendiente', title: 'Pendiente', tasks: [] },
-    { id: 'proceso', title: 'En proceso', tasks: [] },
-    { id: 'revision', title: 'En revisión', tasks: [] },
-    { id: 'completada', title: 'Completada', tasks: [] }
-  ])
+  // Estado de Columnas Kanban con Respaldo Automático Local contra reinicios del Servidor Nube
+  const [columns, setColumns] = useState(() => {
+    try {
+      const saved = localStorage.getItem('schoolboard_v3_clean_tasks')
+      if (saved) return JSON.parse(saved)
+    } catch (e) {}
+    return [
+      { id: 'pendiente', title: 'Pendiente', tasks: [] },
+      { id: 'proceso', title: 'En proceso', tasks: [] },
+      { id: 'revision', title: 'En revisión', tasks: [] },
+      { id: 'completada', title: 'Completada', tasks: [] }
+    ]
+  })
   
-  // Estado de Epics y Workspaces (Espacios)
-  const [epics, setEpics] = useState([])
-  const [workspaces, setWorkspaces] = useState([])
+  // Estado de Epics y Workspaces (Espacios) con persistencia local blindada
+  const [epics, setEpics] = useState(() => {
+    try {
+      const saved = localStorage.getItem('schoolboard_v3_clean_epics')
+      return saved ? JSON.parse(saved) : []
+    } catch (e) { return [] }
+  })
+  const [workspaces, setWorkspaces] = useState(() => {
+    try {
+      const saved = localStorage.getItem('schoolboard_v3_clean_workspaces')
+      return saved ? JSON.parse(saved) : []
+    } catch (e) { return [] }
+  })
   
   // Estado Global de Equipos y Directorio de Compañeros de Trabajo (100% en español y limpio de caché antigua)
   const [teams, setTeams] = useState(() => {
@@ -44,16 +60,28 @@ export function TaskProvider({ children }) {
     }
   })
 
-  // Sincronizar cambios en Equipos y Compañeros al almacenamiento persistente
+  // Sincronizar absolutamente todo al almacenamiento persistente en cada cambio
   useEffect(() => {
-    localStorage.setItem('schoolboard_v3_clean_teams', JSON.stringify(teams))
+    try { localStorage.setItem('schoolboard_v3_clean_tasks', JSON.stringify(columns)) } catch (e) {}
+  }, [columns])
+
+  useEffect(() => {
+    try { localStorage.setItem('schoolboard_v3_clean_epics', JSON.stringify(epics)) } catch (e) {}
+  }, [epics])
+
+  useEffect(() => {
+    try { localStorage.setItem('schoolboard_v3_clean_workspaces', JSON.stringify(workspaces)) } catch (e) {}
+  }, [workspaces])
+
+  useEffect(() => {
+    try { localStorage.setItem('schoolboard_v3_clean_teams', JSON.stringify(teams)) } catch (e) {}
   }, [teams])
 
   useEffect(() => {
-    localStorage.setItem('schoolboard_v3_clean_members', JSON.stringify(teamMembers))
+    try { localStorage.setItem('schoolboard_v3_clean_members', JSON.stringify(teamMembers)) } catch (e) {}
   }, [teamMembers])
 
-  // Obtener Actividades del backend
+  // Obtener Actividades del backend (protegiendo el trabajo del usuario si el servidor gratuito se reinició)
   const fetchTasks = useCallback(async () => {
     if (!token) return
     try {
@@ -62,12 +90,20 @@ export function TaskProvider({ children }) {
       })
       if (res.ok) {
         const data = await res.json()
-        setColumns(data)
-      } else {
-        console.error('Failed to fetch tasks:', res.statusText)
+        const serverTasksCount = data.reduce((acc, col) => acc + (col.tasks?.length || 0), 0)
+        const localData = JSON.parse(localStorage.getItem('schoolboard_v3_clean_tasks') || '[]')
+        const localTasksCount = (Array.isArray(localData) ? localData : []).reduce((acc, col) => acc + (col.tasks?.length || 0), 0)
+        
+        if (serverTasksCount > 0 || localTasksCount === 0) {
+          setColumns(data)
+        } else if (localTasksCount > 0) {
+          setColumns(localData)
+        }
       }
     } catch (e) {
-      console.error('Error fetching tasks from API', e)
+      console.error('Error al consultar servidor, cargando desde respaldo local', e)
+      const localData = JSON.parse(localStorage.getItem('schoolboard_v3_clean_tasks') || '[]')
+      if (Array.isArray(localData) && localData.length > 0) setColumns(localData)
     }
   }, [token])
 
@@ -80,17 +116,17 @@ export function TaskProvider({ children }) {
       })
       if (res.ok) {
         const data = await res.json()
-        // Borrar explícitamente cualquier iniciativa o epic de prueba que haya quedado de versiones pasadas
-        localStorage.removeItem('schoolboard_custom_epics')
-        const localEpics = JSON.parse(localStorage.getItem('schoolboard_v3_clean_epics') || '[]')
-        setEpics(data.length > 0 ? data : localEpics)
+        if (data && data.length > 0) {
+          setEpics(data)
+          return
+        }
       }
-    } catch (e) {
-      console.error('Error fetching epics from API', e)
-    }
+    } catch (e) {}
+    const localEpics = JSON.parse(localStorage.getItem('schoolboard_v3_clean_epics') || '[]')
+    if (localEpics.length > 0) setEpics(localEpics)
   }, [token])
 
-  // Obtener Espacios (Workspaces) en vivo del backend
+  // Obtener Espacios (Workspaces) en vivo del backend / persistencia local
   const fetchWorkspaces = useCallback(async () => {
     if (!token) return
     try {
@@ -99,11 +135,14 @@ export function TaskProvider({ children }) {
       })
       if (res.ok) {
         const data = await res.json()
-        setWorkspaces(data)
+        if (data && data.length > 0) {
+          setWorkspaces(data)
+          return
+        }
       }
-    } catch (e) {
-      console.error('Error fetching workspaces from API', e)
-    }
+    } catch (e) {}
+    const localWp = JSON.parse(localStorage.getItem('schoolboard_v3_clean_workspaces') || '[]')
+    if (localWp.length > 0) setWorkspaces(localWp)
   }, [token])
 
   useEffect(() => {
@@ -111,15 +150,6 @@ export function TaskProvider({ children }) {
       fetchTasks()
       fetchEpics()
       fetchWorkspaces()
-    } else {
-      setColumns([
-        { id: 'pendiente', title: 'Pendiente', tasks: [] },
-        { id: 'proceso', title: 'En proceso', tasks: [] },
-        { id: 'revision', title: 'En revisión', tasks: [] },
-        { id: 'completada', title: 'Completada', tasks: [] }
-      ])
-      setEpics([])
-      setWorkspaces([])
     }
   }, [token, fetchTasks, fetchEpics, fetchWorkspaces])
 

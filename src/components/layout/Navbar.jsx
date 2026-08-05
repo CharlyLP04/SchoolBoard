@@ -33,26 +33,26 @@ export default function Navbar() {
   const [notifications, setNotifications] = useState([
     {
       id: 1,
-      title: '¡Nueva Épica Registrada!',
-      desc: 'Se ha vinculado un nuevo sprint en el tablero ágil.',
-      time: 'Hace 3 min',
-      read: false,
-      type: 'epic',
-      link: '/inicio'
-    },
-    {
-      id: 2,
-      title: 'Protección Ocular Activa',
-      desc: 'Norma ergonómica WCAG aplicada en modo noche.',
-      time: 'Hace 15 min',
+      title: '🛡️ Regla de Calidad Activa',
+      desc: 'El sistema bloquea fechas pasadas y requiere evidencias en actividades completadas.',
+      time: 'Hace 2 min',
       read: false,
       type: 'system',
       link: '/inicio'
     },
     {
+      id: 2,
+      title: '📋 Módulo y Backlog Listos',
+      desc: 'Organiza tus próximas actividades o promueve tareas directamente a tu tablero.',
+      time: 'Hace 15 min',
+      read: false,
+      type: 'epic',
+      link: '/inicio'
+    },
+    {
       id: 3,
-      title: 'Avance en Checklist',
-      desc: 'Actividad superó el 67% en la barra de progreso.',
+      title: '🚀 Avance en tus Tareas',
+      desc: 'Has registrado progreso en tus listas de chequeo y subtareas hoy.',
       time: 'Hace 1 hora',
       read: true,
       type: 'progress',
@@ -60,8 +60,8 @@ export default function Navbar() {
     },
     {
       id: 4,
-      title: 'Reportes y KPI Listos',
-      desc: 'Gráficas de rendimiento listas para consulta y exportación.',
+      title: '📊 Estadísticas y Reportes',
+      desc: 'El resumen gráfico del rendimiento de tu equipo está disponible en Reportes.',
       time: 'Hace 2 horas',
       read: true,
       type: 'report',
