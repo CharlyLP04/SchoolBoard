@@ -11,7 +11,7 @@ import {
 
 function CreateEpicModal({ isOpen, onClose, onCreateEpic }) {
   const [title, setTitle] = useState('')
-  const [tagsInput, setTagsInput] = useState('BACKEND, INFRAESTRUCTURA')
+  const [tagsInput, setTagsInput] = useState('')
   const toast = useToast()
 
   if (!isOpen) return null
@@ -25,16 +25,14 @@ function CreateEpicModal({ isOpen, onClose, onCreateEpic }) {
     onCreateEpic({
       id: newId,
       title: title.trim(),
-      tags: tagsList.length ? tagsList : ['CORE'],
+      tags: tagsList.length ? tagsList : ['GENERAL'],
       progress: 0,
-      items: [
-        { id: `${newId}-1`, title: 'Análisis de requisitos iniciales', status: 'Pendiente' },
-        { id: `${newId}-2`, title: 'Configuración arquitectónica en entorno', status: 'En proceso' }
-      ]
+      items: [] // Inicia completamente limpio sin historias invasivas
     })
 
-    toast.success(`¡Epic ${newId} fundado y cargado en el backlog!`, 3500)
+    toast.success(`¡Módulo "${title.trim()}" registrado correctamente en tu proyecto!`, 3500)
     setTitle('')
+    setTagsInput('')
     onClose()
   }
 
@@ -48,8 +46,8 @@ function CreateEpicModal({ isOpen, onClose, onCreateEpic }) {
               <Sparkles size={16} />
             </div>
             <div>
-              <h3 className="text-base font-bold text-text-primary">Crear Nueva Iniciativa de Proyecto</h3>
-              <p className="text-xs text-text-secondary">Agrupa un módulo completo de historias o entregables.</p>
+              <h3 className="text-base font-bold text-text-primary">Crear Nuevo Módulo o Categoría (Épica)</h3>
+              <p className="text-xs text-text-secondary">Agrupa tus tareas por grandes temas, etapas o materias de estudio.</p>
             </div>
           </div>
           <button onClick={onClose} className="p-1 rounded-lg text-text-muted hover:text-white transition-colors">
@@ -59,11 +57,11 @@ function CreateEpicModal({ isOpen, onClose, onCreateEpic }) {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs text-text-secondary font-bold uppercase mb-1">Título / Nombre de la Iniciativa</label>
+            <label className="block text-xs text-text-secondary font-bold uppercase mb-1">Nombre del Módulo / Categoría *</label>
             <input
               type="text"
               required
-              placeholder="Ej. Integración con Pasarela de Pagos & Auditoría"
+              placeholder="Ej. Proyecto Final de Desarrollo, Investigación, Diseño..."
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               className="input-base"
@@ -71,10 +69,10 @@ function CreateEpicModal({ isOpen, onClose, onCreateEpic }) {
             />
           </div>
           <div>
-            <label className="block text-xs text-text-secondary font-bold uppercase mb-1">Etiquetas (separadas por coma)</label>
+            <label className="block text-xs text-text-secondary font-bold uppercase mb-1">Etiquetas (opcional, separadas por coma)</label>
             <input
               type="text"
-              placeholder="Ej. FINTECH, SECURITY, FRONTEND"
+              placeholder="Ej. INVESTIGACIÓN, EXPO, DISEÑO"
               value={tagsInput}
               onChange={(e) => setTagsInput(e.target.value)}
               className="input-base"
@@ -130,12 +128,12 @@ function EpicBacklogRow({ epic }) {
     e.stopPropagation()
     addTask('pendiente', {
       title: item.title,
-      description: `Actividad promovida directamente desde el Epic [${epic.id}] ${epic.title}.`,
+      description: `Actividad creada desde el módulo [${epic.id}] ${epic.title}.`,
       priority: 'medium',
-      assignee: 'Carlos Olaya Gutierres',
+      assignee: 'Sin asignar',
       project: epic.title || 'Módulo Principal'
     })
-    toast.success(`🚀 "${item.title}" enviada al tablero en columna Pendiente`, 3500)
+    toast.success(`🚀 Tarea "${item.title}" enviada exitosamente a tu columna 'Pendiente' arriba`, 4000)
   }
 
   function handleDeleteItem(itemId, e) {
@@ -268,7 +266,7 @@ function EpicBacklogRow({ epic }) {
           })}
 
           {items.length === 0 && (
-            <p className="text-xs text-text-muted italic py-2 pl-2">Sin historias de usuario asociadas en esta Iniciativa. ¡Añade tu primera entrega abajo!</p>
+            <p className="text-xs text-text-muted italic py-2 pl-2">Aún no has agregado tareas a este módulo. ¡Haz clic en el botón de abajo para registrar la primera!</p>
           )}
 
           {/* Área animada para añadir nuevas historias en el tablero */}
@@ -277,7 +275,7 @@ function EpicBacklogRow({ epic }) {
               <input
                 type="text"
                 autoFocus
-                placeholder="Escribe el título de tu nueva historia de usuario o entregable..."
+                placeholder="Escribe el título o nombre de tu nueva tarea para este módulo..."
                 value={newStoryTitle}
                 onChange={(e) => setNewStoryTitle(e.target.value)}
                 className="input-base py-2.5 text-xs flex-1 font-semibold"
@@ -288,7 +286,7 @@ function EpicBacklogRow({ epic }) {
                   className="px-4 py-2.5 bg-lavender hover:bg-lavender-hover text-white text-xs font-bold rounded-xl shadow-md active:scale-95 transition-all flex items-center gap-1"
                 >
                   <Plus size={14} />
-                  Guardar historia
+                  Guardar tarea
                 </button>
                 <button
                   type="button"
@@ -305,7 +303,7 @@ function EpicBacklogRow({ epic }) {
               className="flex items-center gap-1.5 text-xs font-bold text-text-secondary hover:text-lavender py-2 px-3 rounded-xl hover:bg-lavender/5 transition-all duration-200 group/add mt-2 select-none active:scale-95 border border-transparent hover:border-lavender/20"
             >
               <Plus size={15} className="text-lavender group-hover/add:scale-125 transition-transform duration-200" />
-              Añadir nueva historia de usuario a esta Iniciativa
+              Añadir nueva tarea o historia a este módulo
             </button>
           )}
         </div>
@@ -610,18 +608,18 @@ export default function Tablero() {
               <Paperclip size={18} />
             </div>
             <div>
-              <h2 className="text-base font-extrabold text-text-primary tracking-tight">Iniciativas y Pendientes del Proyecto</h2>
-              <p className="text-xs text-text-secondary mt-0.5">Visión general en vivo. Promueve historias al tablero o rota sus estados al instante.</p>
+              <h2 className="text-base font-extrabold text-text-primary tracking-tight">Módulos e Historias del Proyecto (Épicas)</h2>
+              <p className="text-xs text-text-secondary mt-0.5">Organiza tu trabajo dividéndolo por etapas o temas. Añade tus tareas aquí y usa &apos;Enviar al Tablero&apos; para iniciarlas.</p>
             </div>
           </div>
 
           <button
             onClick={() => setIsCreateEpicOpen(true)}
             className="flex items-center justify-center gap-1.5 bg-lavender hover:bg-lavender-hover text-white rounded-xl px-4 py-2 text-xs font-extrabold transition-all duration-200 shadow-md shadow-lavender/25 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 select-none self-start sm:self-auto"
-            title="Crear un nuevo módulo o iniciativa en este tablero"
+            title="Crear una nueva categoría o módulo en tu tablero"
           >
             <Plus size={15} />
-            + Nueva Iniciativa
+            Nuevo Módulo
           </button>
         </div>
 
