@@ -393,6 +393,13 @@ app.post('/api/auth/reset', authenticateToken, async (req, res) => {
     await db.run('DROP TABLE IF EXISTS comments')
     await db.run('DROP TABLE IF EXISTS evidences')
     await db.run('DROP TABLE IF EXISTS activity_logs')
+    await db.run('DROP TABLE IF EXISTS workspaces')
+    await db.run('DROP TABLE IF EXISTS workspace_members')
+    await db.run('DROP TABLE IF EXISTS lists')
+    await db.run('DROP TABLE IF EXISTS list_cards')
+    await db.run('DROP TABLE IF EXISTS password_reset_tokens')
+    await db.run('DROP TABLE IF EXISTS registration_verifications')
+    await db.run('DROP TABLE IF EXISTS users')
     await db.close()
 
     // Reinitialize DB
