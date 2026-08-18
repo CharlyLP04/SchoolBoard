@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 import { fileURLToPath } from 'url'
 import { getDbConnection, initializeDb } from './db.js'
 
@@ -277,8 +278,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
     if (!user) {
       await db.close()
-      // Respuesta genérica: no revelamos si el correo existe o no (buena práctica de seguridad)
-      return res.json({ success: true, message: 'Si el correo existe, se generó un enlace de recuperación.' })
+      return res.status(404).json({ error: 'No existe ninguna cuenta con ese correo electrónico.' })
     }
 
     const token = crypto.randomBytes(32).toString('hex')
