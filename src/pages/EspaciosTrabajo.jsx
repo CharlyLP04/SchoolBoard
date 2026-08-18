@@ -74,7 +74,8 @@ export default function EspaciosTrabajo() {
   }
 
   return (
-    <div className="space-y-8 animate-in fade-in duration-300 max-w-7xl mx-auto pb-12">
+    <>
+      <div className="space-y-8 animate-in fade-in duration-300 max-w-7xl mx-auto pb-12">
       
       <div className="border-b border-border/70 pb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -179,7 +180,7 @@ export default function EspaciosTrabajo() {
             })}
           </div>
         </div>
-      )}
+      </div>
 
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -243,6 +244,6 @@ export default function EspaciosTrabajo() {
           </div>
         </div>
       )}
-    </div>
+    </>
   )
 }

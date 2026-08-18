@@ -329,7 +329,8 @@ export default function Reportes() {
   }, [timeRange])
 
   return (
-    <div className="space-y-7 animate-in fade-in duration-300">
+    <>
+      <div className="space-y-7 animate-in fade-in duration-300">
       <div className="border-b border-border/60 pb-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl font-bold text-text-primary tracking-tight">Reportes y Analíticas de Rendimiento</h1>
@@ -528,6 +529,6 @@ export default function Reportes() {
         tasks={activeListModal.tasks}
         icon={activeListModal.icon}
       />
-    </div>
+    </>
   )
 }

@@ -402,7 +402,8 @@ export default function Tablero() {
   }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-300">
+    <>
+      <div className="space-y-6 animate-in fade-in duration-300">
       
       {/* Cabecera y botón Exportar */}
       <div className="border-b border-border/60 pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -658,6 +659,6 @@ export default function Tablero() {
           }}
         />
       )}
-    </div>
+    </>
   )
 }

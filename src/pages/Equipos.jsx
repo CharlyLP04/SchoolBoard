@@ -748,7 +748,8 @@ export default function Equipos() {
   }
 
   return (
-    <div className="space-y-10 animate-in fade-in duration-300 max-w-7xl mx-auto pb-12">
+    <>
+      <div className="space-y-10 animate-in fade-in duration-300 max-w-7xl mx-auto pb-12">
       
       {/* Cabecera Principal */}
       <div className="border-b border-border/70 pb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -993,6 +994,6 @@ export default function Equipos() {
         onClose={() => setIsEpicModalOpen(false)}
         onCreateEpic={addEpic}
       />
-    </div>
+    </>
   )
 }
