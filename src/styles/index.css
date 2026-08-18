@@ -154,7 +154,7 @@
   }
 
   /* FIX: Suavizar los bordes blancos en modo oscuro porque resaltan demasiado y se ven chistosos */
-  :root:not(.light) [class*="border-white\/"] {
+  :root:not(.light) [class*="border-white/"] {
     border-color: var(--color-border-field) !important;
   }
 
