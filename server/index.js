@@ -288,7 +288,9 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
       [user.id, token, expiresAt]
     )
-    const resetUrl = `https://schoolboard-frontend.vercel.app/restablecer-contrasena?token=${token}`
+    
+    const clientUrl = req.headers.origin || 'https://school-board-gilt.vercel.app'
+    const resetUrl = `${clientUrl}/restablecer-contrasena?token=${token}`
 
     fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -953,7 +955,8 @@ app.post('/api/workspaces/:id/invite', authenticateToken, async (req, res) => {
     const workspace = await db.get('SELECT * FROM workspaces WHERE id = ?', [id])
     await db.close()
 
-    const workspaceUrl = `https://schoolboard-frontend.vercel.app/espacios/${id}`
+    const clientUrl = req.headers.origin || 'https://school-board-gilt.vercel.app'
+    const workspaceUrl = `${clientUrl}/espacios/${id}`
 
     fetch('https://api.resend.com/emails', {
       method: 'POST',
