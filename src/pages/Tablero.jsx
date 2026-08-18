@@ -605,6 +605,57 @@ export default function Tablero() {
 
     </div>
 
+      
+      {/* Sección Epics & Backlogs Totalmente Interactiva y Animada */}
+      <div className="card p-6 shadow-xl border-border/80 relative overflow-hidden transition-all mt-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/70 pb-5 mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-bg-field border border-border flex items-center justify-center text-lavender shadow-sm group-hover:scale-105 transition-transform">
+              <Paperclip size={18} />
+            </div>
+            <div>
+              <h2 className="text-base font-extrabold text-text-primary tracking-tight">Módulos e Historias del Proyecto (Épicas)</h2>
+              <p className="text-xs text-text-secondary mt-0.5">Organiza tu trabajo dividéndolo por etapas o temas. Añade tus tareas aquí y usa 'Enviar al Tablero' para iniciarlas.</p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setIsCreateEpicOpen(true)}
+            className="flex items-center justify-center gap-1.5 bg-lavender hover:bg-lavender-hover text-white rounded-xl px-4 py-2 text-xs font-extrabold transition-all duration-200 shadow-md shadow-lavender/25 hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 active:scale-95 select-none self-start sm:self-auto"
+            title="Crear una nueva categoría o módulo en tu tablero"
+          >
+            <Plus size={15} />
+            Nuevo Módulo
+          </button>
+        </div>
+
+        <div className="divide-y divide-border/60">
+          {epics.map((epic) => (
+            <EpicBacklogRow key={epic.id} epic={epic} />
+          ))}
+          {epics.length === 0 && (
+            <div className="text-center py-12 text-text-muted text-xs space-y-2">
+              <p className="italic">No hay iniciativas registradas en este tablero actualmente.</p>
+              <button
+                onClick={() => setIsCreateEpicOpen(true)}
+                className="text-lavender font-bold hover:underline"
+              >
+                + Crear la primera Iniciativa ahora
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+
+      
+      {/* Modales y Drawers */}
+      <CreateEpicModal
+        isOpen={isCreateEpicOpen}
+        onClose={() => setIsCreateEpicOpen(false)}
+        onCreateEpic={(newEpic) => addEpic(newEpic)}
+      />
+
       {selectedTaskId && (
         <EditTaskDrawer
           taskId={selectedTaskId}
