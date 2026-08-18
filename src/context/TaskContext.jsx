@@ -29,6 +29,29 @@ export function TaskProvider({ children }) {
     } catch (e) { return [] }
   })
 
+  const [teams, setTeams] = useState(() => {
+    try {
+      localStorage.removeItem('schoolboard_custom_teams')
+      const saved = localStorage.getItem('schoolboard_v3_clean_teams')
+      return saved ? JSON.parse(saved) : []
+    } catch (e) {
+      return []
+    }
+  })
+  
+  const [teamMembers, setTeamMembers] = useState(() => {
+    try {
+      localStorage.removeItem('schoolboard_team_members')
+      const saved = localStorage.getItem('schoolboard_v3_clean_members')
+      if (saved) return JSON.parse(saved)
+      return [
+        { id: 'm1', name: user?.name || 'Administrador', role: 'Líder de Proyecto', email: user?.email || 'admin@escuela.com' }
+      ]
+    } catch (e) {
+      return [{ id: 'm1', name: 'Administrador', role: 'Líder de Proyecto', email: 'admin@escuela.com' }]
+    }
+  })
+
   // Sincronizar absolutamente todo al almacenamiento persistente en cada cambio
   useEffect(() => {
     try { localStorage.setItem('schoolboard_v3_clean_tasks', JSON.stringify(columns)) } catch (e) {}
@@ -37,6 +60,14 @@ export function TaskProvider({ children }) {
   useEffect(() => {
     try { localStorage.setItem('schoolboard_v3_clean_workspaces', JSON.stringify(workspaces)) } catch (e) {}
   }, [workspaces])
+
+  useEffect(() => {
+    try { localStorage.setItem('schoolboard_v3_clean_teams', JSON.stringify(teams)) } catch (e) {}
+  }, [teams])
+
+  useEffect(() => {
+    try { localStorage.setItem('schoolboard_v3_clean_members', JSON.stringify(teamMembers)) } catch (e) {}
+  }, [teamMembers])
 
   // Obtener Actividades del backend (protegiendo el trabajo del usuario si el servidor gratuito se reinició)
   const fetchTasks = useCallback(async () => {
@@ -489,11 +520,45 @@ export function TaskProvider({ children }) {
 
 
 
+  const addTeamMember = useCallback((memberData) => {
+    const newMember = { ...memberData, id: Date.now().toString() }
+    setTeamMembers(prev => [...prev, newMember])
+    toast.success(`Compañero ${newMember.name} agregado al equipo.`, 3000)
+  }, [toast])
+
+  const removeTeamMember = useCallback((memberName) => {
+    setTeamMembers(prev => prev.filter(m => m.name !== memberName))
+    toast.info(`Compañero eliminado del equipo.`, 3000)
+  }, [toast])
+
+  const addTeam = useCallback((teamData) => {
+    const newTeam = { ...teamData, id: Date.now().toString() }
+    setTeams(prev => [...prev, newTeam])
+    toast.success(`Grupo de trabajo "${newTeam.name}" formado con éxito.`, 3000)
+  }, [toast])
+
+  const updateTeam = useCallback((updatedTeam) => {
+    setTeams(prev => prev.map(t => t.id === updatedTeam.id ? updatedTeam : t))
+    toast.success(`Grupo "${updatedTeam.name}" actualizado.`, 2000)
+  }, [toast])
+
+  const deleteTeam = useCallback((teamId) => {
+    setTeams(prev => prev.filter(t => t.id !== teamId))
+    toast.info('Grupo de trabajo disuelto.', 3000)
+  }, [toast])
+
   const value = useMemo(() => ({
     columns,
     allTasks,
     workspaces,
     fetchWorkspaces,
+    teams,
+    teamMembers,
+    addTeamMember,
+    removeTeamMember,
+    addTeam,
+    updateTeam,
+    deleteTeam,
     getTaskById,
     addTask,
     updateTask,
@@ -512,6 +577,13 @@ export function TaskProvider({ children }) {
     allTasks,
     workspaces,
     fetchWorkspaces,
+    teams,
+    teamMembers,
+    addTeamMember,
+    removeTeamMember,
+    addTeam,
+    updateTeam,
+    deleteTeam,
     getTaskById,
     addTask,
     updateTask,
