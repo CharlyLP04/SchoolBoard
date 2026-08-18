@@ -768,7 +768,7 @@ export default function Equipos() {
             className="flex items-center justify-center gap-2 bg-gradient-to-r from-lavender to-emerald-500 hover:opacity-95 text-white rounded-2xl px-5 py-3 text-xs font-black transition-all shadow-lg shadow-lavender/25 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 select-none"
           >
             <UserPlus size={16} strokeWidth={2.5} />
-            + Registrar Compañero
+            Registrar Compañero
           </button>
           
           <button
@@ -776,7 +776,7 @@ export default function Equipos() {
             className="flex items-center justify-center gap-2 bg-bg-field hover:bg-white/10 text-white border border-white/10 hover:border-lavender/40 rounded-2xl px-5 py-3 text-xs font-black transition-all shadow-sm active:scale-95 select-none"
           >
             <Users size={16} className="text-lavender" />
-            + Fundar Grupo de Trabajo
+            Fundar Grupo de Trabajo
           </button>
 
           <button
@@ -784,7 +784,7 @@ export default function Equipos() {
             className="flex items-center justify-center gap-2 bg-bg-field hover:bg-white/10 text-white border border-white/10 hover:border-lavender/40 rounded-2xl px-5 py-3 text-xs font-black transition-all shadow-sm active:scale-95 select-none"
           >
             <Plus size={16} className="text-lavender" strokeWidth={3} />
-            + Nueva Iniciativa (Épica)
+            Nueva Iniciativa (Épica)
           </button>
         </div>
       </div>
@@ -932,7 +932,7 @@ export default function Equipos() {
               className="text-xs text-white font-black bg-lavender hover:bg-lavender-hover px-4 py-2 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
             >
               <Plus size={15} strokeWidth={3} />
-              + Crear Iniciativa
+              Crear Iniciativa
             </button>
           </div>
         </div>
