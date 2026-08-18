@@ -3,7 +3,17 @@ import cors from 'cors'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
+import nodemailer from 'nodemailer'
 import { getDbConnection, initializeDb } from './db.js'
+
+// Transporter para enviar correos
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'pruebasschool6@gmail.com',
+    pass: 'oljclmrgcztfimdt' // App Password proporcionada
+  }
+})
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -176,19 +186,32 @@ app.post('/api/auth/forgot-password', async (req, res) => {
       'INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (?, ?, ?)',
       [user.id, token, expiresAt]
     )
-    await db.close()
+    const resetUrl = `https://schoolboard-frontend.vercel.app/restablecer-contrasena?token=${token}`
+
+    const mailOptions = {
+      from: '"SchoolBoard" <pruebasschool6@gmail.com>',
+      to: user.email,
+      subject: 'Recuperación de Contraseña - SchoolBoard',
+      html: `
+        <h3>Hola ${user.name},</h3>
+        <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para crear una nueva:</p>
+        <a href="${resetUrl}">Restablecer mi contraseña</a>
+        <p>Si no solicitaste esto, ignora este correo.</p>
+      `
+    }
+    
+    // Send email asynchronously
+    transporter.sendMail(mailOptions).catch(err => console.error('Error sending email:', err))
 
     await logActivity(`Solicitud de recuperación de contraseña para "${user.email}"`, user.name)
 
     res.json({
       success: true,
-      message: 'Se generó un enlace de recuperación (simulado, no se envía correo real en este entorno).',
-      resetToken: token,
-      resetUrl: `/restablecer-contrasena?token=${token}`
+      message: 'Se ha enviado un correo con las instrucciones para restablecer tu contraseña.',
     })
   } catch (error) {
     console.error('Error generating reset token:', error)
-    res.status(500).json({ error: 'Error al generar el enlace de recuperación.' })
+    res.status(500).json({ error: 'Error al procesar la solicitud de recuperación.' })
   }
 })
 
@@ -817,9 +840,26 @@ app.post('/api/workspaces/:id/invite', authenticateToken, async (req, res) => {
     const workspace = await db.get('SELECT * FROM workspaces WHERE id = ?', [id])
     await db.close()
 
+    const workspaceUrl = `https://schoolboard-frontend.vercel.app/espacios/${id}`
+
+    const mailOptions = {
+      from: '"SchoolBoard" <pruebasschool6@gmail.com>',
+      to: invitedUser.email,
+      subject: 'Invitación a Espacio de Trabajo - SchoolBoard',
+      html: `
+        <h3>Hola ${invitedUser.name},</h3>
+        <p>¡Has sido invitado al espacio de trabajo <strong>${workspace?.name}</strong> por ${req.user.name}!</p>
+        <p>Puedes acceder al espacio de trabajo haciendo clic en el siguiente enlace:</p>
+        <a href="${workspaceUrl}">Ir al Espacio de Trabajo</a>
+      `
+    }
+
+    // Send email asynchronously
+    transporter.sendMail(mailOptions).catch(err => console.error('Error sending invite email:', err))
+
     await logActivity(`${invitedUser.name} fue invitado al espacio "${workspace?.name}" por ${req.user.name}`, req.user.name)
 
-    res.status(201).json({ success: true, message: `${invitedUser.name} fue agregado al espacio de trabajo.` })
+    res.status(201).json({ success: true, message: `${invitedUser.name} fue agregado al espacio de trabajo y notificado por correo.` })
   } catch (error) {
     console.error('Error inviting member:', error)
     res.status(500).json({ error: 'Error al invitar al miembro.' })
