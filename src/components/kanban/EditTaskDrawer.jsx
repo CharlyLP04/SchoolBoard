@@ -5,7 +5,7 @@ import { useToast } from '../../context/ToastContext.jsx'
 
 export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
   const toast = useToast()
-  const { getTaskById, updateTask, deleteEvidence, addEvidenceFile, addSubtask, toggleSubtask, deleteSubtask, teamMembers, epics } = useTasks()
+  const { getTaskById, updateTask, deleteEvidence, addEvidenceFile, addSubtask, toggleSubtask, deleteSubtask } = useTasks()
   const task = getTaskById(taskId)
   const drawerRef = useRef(null)
 
@@ -17,8 +17,6 @@ export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
   const [date, setDate] = useState('')
   const [priority, setPriority] = useState('medium')
   const [status, setStatus] = useState('pendiente')
-  const [epic, setEpic] = useState('')
-  const [userStory, setUserStory] = useState('')
 
   // New subtask state
   const [newSubtaskTitle, setNewSubtaskTitle] = useState('')
@@ -35,8 +33,6 @@ export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
       setDate(task.date || '')
       setPriority(task.priority || 'medium')
       setStatus(task.status || 'pendiente')
-      setEpic(task.epic || '')
-      setUserStory(task.userStory || '')
     }
   }, [task, isOpen])
 
@@ -57,14 +53,6 @@ export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
 
   if (!isOpen || !task) return null
 
-  // Opciones procedentes del Directorio de Compañeros de Equipos
-  const responsibleOptions = Array.from(new Set(['Sin asignar', ...(teamMembers?.map(m => m.name) || [])]))
-  
-  // Epics sincronizados
-  const availableEpics = (epics || []).map(e => `${e.id} ${e.title}`)
-  const userStoryOptions = epic
-    ? (epics || []).find(e => epic.startsWith(e.id))?.items?.map(item => item.title) || []
-    : []
 
   function handleSave(e) {
     if (e) e.preventDefault()
@@ -88,8 +76,6 @@ export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
       date,
       priority,
       status,
-      epic,
-      userStory,
     })
     
     onClose()
@@ -185,22 +171,14 @@ export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
                   <User size={13} />
                   Responsable <span className="text-priority-high">*</span>
                 </label>
-                <select
+                <input
+                  type="text"
+                  required
                   value={assignee}
                   onChange={(e) => setAssignee(e.target.value)}
-                  className="input-base py-3 px-3.5 bg-[#101018] text-white text-xs font-bold border-white/10 hover:border-lavender/40 rounded-xl cursor-pointer appearance-none bg-no-repeat transition-all"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%238b7cf6' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
-                    backgroundPosition: 'right 14px center',
-                    backgroundSize: '14px'
-                  }}
-                >
-                  {responsibleOptions.map((opt) => (
-                    <option key={opt} value={opt} className="bg-[#101018] text-white font-bold py-1">
-                      👤 {opt}
-                    </option>
-                  ))}
-                </select>
+                  className="input-base py-3 px-3.5 bg-[#101018] text-white text-xs font-bold border-white/10 hover:border-lavender/40 rounded-xl transition-all"
+                  placeholder="Nombre del responsable"
+                />
               </div>
 
               {/* Fecha límite */}
@@ -313,55 +291,6 @@ export default function EditTaskDrawer({ taskId, isOpen, onClose }) {
                 </select>
               </div>
 
-              {/* Épica */}
-              <div>
-                <label className="text-xs font-black text-text-secondary uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                  <Layers size={13} />
-                  Épica asociada
-                </label>
-                <select
-                  value={epic}
-                  onChange={(e) => {
-                    setEpic(e.target.value)
-                    setUserStory('') // Reset user story on epic change
-                  }}
-                  className="input-base py-2.5 px-3.5 bg-[#101018] text-white text-xs font-bold border-white/10 hover:border-lavender/40 rounded-xl cursor-pointer appearance-none bg-no-repeat transition-all"
-                  style={{
-                    backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%239a99a8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
-                    backgroundPosition: 'right 14px center',
-                    backgroundSize: '14px'
-                  }}
-                >
-                  <option value="" className="bg-[#101018] text-text-muted">Ninguna</option>
-                  {availableEpics.map(ep => (
-                    <option key={ep} value={ep} className="bg-[#101018] text-white font-semibold">⚡ {ep}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Historia de Usuario */}
-            <div>
-              <label className="text-xs font-black text-text-secondary uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                <BookOpen size={13} />
-                Historia de usuario
-              </label>
-              <select
-                value={userStory}
-                onChange={(e) => setUserStory(e.target.value)}
-                disabled={!epic || userStoryOptions.length === 0}
-                className="input-base py-2.5 px-3.5 bg-[#101018] text-white text-xs font-bold border-white/10 hover:border-lavender/40 rounded-xl cursor-pointer appearance-none bg-no-repeat transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%239a99a8' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
-                  backgroundPosition: 'right 14px center',
-                  backgroundSize: '14px'
-                }}
-              >
-                <option value="" className="bg-[#101018] text-text-muted">Ninguna historia seleccionada</option>
-                {userStoryOptions.map(story => (
-                  <option key={story} value={story} className="bg-[#101018] text-white font-semibold">📖 {story}</option>
-                ))}
-              </select>
             </div>
           </div>
 

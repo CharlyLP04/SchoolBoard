@@ -2,13 +2,15 @@ import { useState, useMemo } from 'react'
 import { useNavigate, useSearchParams, Link } from 'react-router-dom'
 import { ChevronLeft, Plus, Trash2, Link2, Calendar, Clock, ArrowUp, Minus, ArrowDown, FolderKanban, Users, Sparkles } from 'lucide-react'
 import { useTasks } from '../context/TaskContext.jsx'
+import { useAuth } from '../context/AuthContext.jsx'
 import { useToast } from '../context/ToastContext.jsx'
 
 export default function NuevaActividad() {
+  const { user } = useAuth()
   const toast = useToast()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
-  const { addTask, workspaces, teamMembers, epics, allTasks } = useTasks()
+  const { addTask, workspaces, allTasks } = useTasks()
 
   const defaultCol = searchParams.get('col') || 'pendiente'
   const defaultWorkspace = searchParams.get('workspace') || (workspaces?.[0]?.name) || 'Espacio General'
@@ -16,9 +18,7 @@ export default function NuevaActividad() {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [project, setProject] = useState(defaultWorkspace)
-  const [epic, setEpic] = useState('')
-  const [userStory, setUserStory] = useState('')
-  const [assignee, setAssignee] = useState(() => teamMembers?.[0]?.name || 'Administrador')
+  const [assignee, setAssignee] = useState(() => user?.name || '')
   const [date, setDate] = useState(() => new Date(Date.now() + 86400000 * 3).toISOString().split('T')[0])
   const [priority, setPriority] = useState('medium')
   const [status, setStatus] = useState(defaultCol)
@@ -32,15 +32,7 @@ export default function NuevaActividad() {
     return Array.from(existing)
   }, [workspaces, allTasks])
 
-  const responsibleOptions = useMemo(() => {
-    const memberNames = teamMembers.map(m => m.name)
-    return Array.from(new Set(['Sin asignar', ...memberNames]))
-  }, [teamMembers])
-  
-  const epicOptions = epics.map(e => `${e.id} ${e.title}`)
-  const userStoryOptions = epic
-    ? epics.find(e => epic.startsWith(e.id))?.items?.map(item => item.title) || []
-    : []
+
 
   const statusOptions = [
     { id: 'pendiente', label: 'Pendiente', icon: Clock },
@@ -90,8 +82,6 @@ export default function NuevaActividad() {
       description: description || title,
       details: description || `Actividad vinculada al espacio: ${project}`,
       project: project || 'Espacio General',
-      epic,
-      userStory,
       assignee,
       date,
       priority,
@@ -161,31 +151,18 @@ export default function NuevaActividad() {
             </div>
 
             <div>
-              <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-black uppercase tracking-wider text-lavender flex items-center gap-1.5">
-                  <Users size={14} />
-                  Responsable (Compañero) *
-                </label>
-                <Link to="/equipos" className="text-[11px] text-emerald-400 hover:underline font-extrabold flex items-center gap-1">
-                  + Agregar compañero
-                </Link>
-              </div>
-              <select
+              <label className="block text-xs font-black uppercase tracking-wider text-lavender mb-2 flex items-center gap-1.5">
+                <Users size={14} />
+                Responsable (Compañero) *
+              </label>
+              <input
+                type="text"
                 value={assignee}
                 onChange={(e) => setAssignee(e.target.value)}
-                className="input-base py-3 text-sm font-bold text-white bg-[#101018] cursor-pointer appearance-none bg-no-repeat border-white/10 hover:border-lavender/50"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%238b7cf6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
-                  backgroundPosition: 'right 14px center',
-                  backgroundSize: '16px'
-                }}
-              >
-                {responsibleOptions.map((opt) => (
-                  <option key={opt} value={opt} className="bg-[#101018] text-white font-bold">
-                    👤 {opt}
-                  </option>
-                ))}
-              </select>
+                className="input-base py-3 font-bold text-white bg-[#101018]"
+                placeholder="Nombre del responsable..."
+                required
+              />
             </div>
 
             <div>
@@ -262,51 +239,7 @@ export default function NuevaActividad() {
               </select>
             </div>
 
-            <div>
-              <label className="block text-xs font-black uppercase tracking-wider text-text-secondary mb-2">Vincular con Épica (Opcional)</label>
-              <select
-                value={epic}
-                onChange={(e) => {
-                  setEpic(e.target.value)
-                  setUserStory('')
-                }}
-                className="input-base py-3 text-xs font-bold text-white bg-[#101018] cursor-pointer appearance-none bg-no-repeat"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239a99a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
-                  backgroundPosition: 'right 14px center',
-                  backgroundSize: '16px'
-                }}
-              >
-                <option value="" className="bg-[#101018] text-text-muted">Ningún epic seleccionado</option>
-                {epicOptions.map((opt) => (
-                  <option key={opt} value={opt} className="bg-[#101018] text-white font-semibold">
-                    ⚡ {opt}
-                  </option>
-                ))}
-              </select>
-            </div>
 
-            <div>
-              <label className="block text-xs font-black uppercase tracking-wider text-text-secondary mb-2">Historia de Usuario Asignada</label>
-              <select
-                value={userStory}
-                onChange={(e) => setUserStory(e.target.value)}
-                disabled={!epic || userStoryOptions.length === 0}
-                className="input-base py-3 text-xs font-bold text-white bg-[#101018] cursor-pointer appearance-none bg-no-repeat disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{
-                  backgroundImage: `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%239a99a8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'></polyline></svg>")`,
-                  backgroundPosition: 'right 14px center',
-                  backgroundSize: '16px'
-                }}
-              >
-                <option value="" className="bg-[#101018] text-text-muted">Seleccionar historia del epic</option>
-                {userStoryOptions.map((opt) => (
-                  <option key={opt} value={opt} className="bg-[#101018] text-white">
-                    📖 {opt}
-                  </option>
-                ))}
-              </select>
-            </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div>

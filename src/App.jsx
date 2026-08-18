@@ -6,7 +6,6 @@ import Registro from './pages/Registro.jsx'
 import RecuperarContrasena from './pages/RecuperarContrasena.jsx'
 import RestablecerContrasena from './pages/RestablecerContrasena.jsx'
 import Tablero from './pages/Tablero.jsx'
-import Equipos from './pages/Equipos.jsx'
 import Reportes from './pages/Reportes.jsx'
 import NuevaActividad from './pages/NuevaActividad.jsx'
 import DetalleActividad from './pages/DetalleActividad.jsx'
@@ -25,7 +24,6 @@ export default function App() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route path="/inicio" element={<Tablero />} />
-          <Route path="/equipos" element={<Equipos />} />
           <Route path="/reportes" element={<Reportes />} />
           <Route path="/actividad/nueva" element={<NuevaActividad />} />
           <Route path="/actividad/:id" element={<DetalleActividad />} />

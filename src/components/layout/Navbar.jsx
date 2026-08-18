@@ -11,7 +11,6 @@ import ConfirmModal from './ConfirmModal.jsx'
 const navItems = [
   { to: '/inicio', label: 'Tablero', icon: LayoutGrid },
   { to: '/espacios', label: 'Espacios', icon: FolderKanban },
-  { to: '/equipos', label: 'Equipos', icon: Users },
   { to: '/reportes', label: 'Reportes', icon: BarChart3 },
 ]
 

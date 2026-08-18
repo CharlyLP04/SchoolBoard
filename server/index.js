@@ -1150,6 +1150,41 @@ app.get('/api/reports/metrics', authenticateToken, async (req, res) => {
 })
 
 
+// POST /api/admin/reset-database - Wipes the database except admin user
+app.post('/api/admin/reset-database', authenticateToken, async (req, res) => {
+  if (req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Acceso denegado. Se requiere rol de administrador.' })
+  }
+
+  try {
+    const db = await getDbConnection()
+    
+    // Wipe tables
+    await db.exec('DELETE FROM tasks')
+    await db.exec('DELETE FROM subtasks')
+    await db.exec('DELETE FROM comments')
+    await db.exec('DELETE FROM evidences')
+    await db.exec('DELETE FROM workspaces')
+    await db.exec('DELETE FROM workspace_members')
+    await db.exec('DELETE FROM lists')
+    await db.exec('DELETE FROM list_cards')
+    await db.exec('DELETE FROM password_reset_tokens')
+    await db.exec('DELETE FROM activity_logs')
+    await db.exec('DELETE FROM registration_verifications')
+    
+    // Wipe non-admin users
+    await db.run("DELETE FROM users WHERE email != 'admin@schoolboard.com'")
+    
+    await logActivity('Limpieza de base de datos ejecutada por administrador.', req.user.name)
+    await db.close()
+
+    res.json({ message: 'Base de datos reiniciada correctamente. Usuarios e información borrados.' })
+  } catch (error) {
+    console.error('Error resetting database:', error)
+    res.status(500).json({ error: 'Error al reiniciar la base de datos.' })
+  }
+})
+
 // Start server
 app.listen(PORT, () => {
   console.log(`SchoolBoard Backend server running at http://localhost:${PORT}`)

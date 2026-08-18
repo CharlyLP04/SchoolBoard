@@ -22,42 +22,11 @@ export function TaskProvider({ children }) {
     ]
   })
   
-  // Estado de Epics y Workspaces (Espacios) con persistencia local blindada
-  const [epics, setEpics] = useState(() => {
-    try {
-      const saved = localStorage.getItem('schoolboard_v3_clean_epics')
-      return saved ? JSON.parse(saved) : []
-    } catch (e) { return [] }
-  })
   const [workspaces, setWorkspaces] = useState(() => {
     try {
       const saved = localStorage.getItem('schoolboard_v3_clean_workspaces')
       return saved ? JSON.parse(saved) : []
     } catch (e) { return [] }
-  })
-  
-  // Estado Global de Equipos y Directorio de Compañeros de Trabajo (100% en español y limpio de caché antigua)
-  const [teams, setTeams] = useState(() => {
-    try {
-      localStorage.removeItem('schoolboard_custom_teams')
-      const saved = localStorage.getItem('schoolboard_v3_clean_teams')
-      return saved ? JSON.parse(saved) : []
-    } catch (e) {
-      return []
-    }
-  })
-  
-  const [teamMembers, setTeamMembers] = useState(() => {
-    try {
-      localStorage.removeItem('schoolboard_team_members')
-      const saved = localStorage.getItem('schoolboard_v3_clean_members')
-      if (saved) return JSON.parse(saved)
-      return [
-        { id: 'm1', name: user?.name || 'Administrador', role: 'Líder de Proyecto', email: user?.email || 'admin@escuela.com' }
-      ]
-    } catch (e) {
-      return [{ id: 'm1', name: 'Administrador', role: 'Líder de Proyecto', email: 'admin@escuela.com' }]
-    }
   })
 
   // Sincronizar absolutamente todo al almacenamiento persistente en cada cambio
@@ -66,20 +35,8 @@ export function TaskProvider({ children }) {
   }, [columns])
 
   useEffect(() => {
-    try { localStorage.setItem('schoolboard_v3_clean_epics', JSON.stringify(epics)) } catch (e) {}
-  }, [epics])
-
-  useEffect(() => {
     try { localStorage.setItem('schoolboard_v3_clean_workspaces', JSON.stringify(workspaces)) } catch (e) {}
   }, [workspaces])
-
-  useEffect(() => {
-    try { localStorage.setItem('schoolboard_v3_clean_teams', JSON.stringify(teams)) } catch (e) {}
-  }, [teams])
-
-  useEffect(() => {
-    try { localStorage.setItem('schoolboard_v3_clean_members', JSON.stringify(teamMembers)) } catch (e) {}
-  }, [teamMembers])
 
   // Obtener Actividades del backend (protegiendo el trabajo del usuario si el servidor gratuito se reinició)
   const fetchTasks = useCallback(async () => {
@@ -148,10 +105,9 @@ export function TaskProvider({ children }) {
   useEffect(() => {
     if (token) {
       fetchTasks()
-      fetchEpics()
       fetchWorkspaces()
     }
-  }, [token, fetchTasks, fetchEpics, fetchWorkspaces])
+  }, [token, fetchTasks, fetchWorkspaces])
 
   // Todas las tareas planas (sin importar la columna)
   const allTasks = useMemo(() => {
@@ -531,97 +487,13 @@ export function TaskProvider({ children }) {
     }
   }, [token, fetchTasks, toast])
 
-  // --- Gestión de Iniciativas (Épicas) ---
-  const addEpic = useCallback((newEpic) => {
-    setEpics(prev => {
-      const updated = [newEpic, ...prev]
-      localStorage.setItem('schoolboard_v3_clean_epics', JSON.stringify(updated))
-      return updated
-    })
-    toast.success(`Iniciativa "${newEpic.title}" registrada con éxito`, 2500)
-  }, [toast])
 
-  const updateEpic = useCallback((epicId, updater) => {
-    setEpics(prev => {
-      const updated = prev.map(ep => ep.id === epicId ? { ...ep, ...updater(ep) } : ep)
-      localStorage.setItem('schoolboard_v3_clean_epics', JSON.stringify(updated))
-      return updated
-    })
-  }, [])
-
-  const deleteEpic = useCallback((epicId) => {
-    setEpics(prev => {
-      const updated = prev.filter(ep => ep.id !== epicId)
-      localStorage.setItem('schoolboard_v3_clean_epics', JSON.stringify(updated))
-      return updated
-    })
-    toast.info('Iniciativa eliminada correctamente', 2000)
-  }, [toast])
-
-  // --- Gestión de Compañeros (Directorio del Equipo) ---
-  const addTeamMember = useCallback((memberData) => {
-    const newMember = {
-      id: `m-${Date.now()}`,
-      name: memberData.name.trim(),
-      role: memberData.role?.trim() || 'Colaborador',
-      email: memberData.email?.trim() || ''
-    }
-    setTeamMembers(prev => {
-      if (prev.some(m => m.name.toLowerCase() === newMember.name.toLowerCase())) {
-        toast.error('Este compañero ya está registrado en el equipo.')
-        return prev
-      }
-      return [...prev, newMember]
-    })
-    toast.success(`¡Compañero "${newMember.name}" registrado! Ya puedes asignarle actividades en el Tablero.`, 3500)
-    return newMember
-  }, [toast])
-
-  const removeTeamMember = useCallback((idOrName) => {
-    setTeamMembers(prev => prev.filter(m => m.id !== idOrName && m.name !== idOrName))
-    toast.info('Colaborador removido del directorio de equipos', 2000)
-  }, [toast])
-
-  // --- Gestión de Equipos ---
-  const addTeam = useCallback((teamData) => {
-    const newTeam = {
-      id: `t-${Date.now()}`,
-      name: teamData.name,
-      project: teamData.project || 'Espacio General',
-      members: teamData.membersList?.length || 1,
-      memberNames: teamData.membersList || [user?.name || 'Administrador'],
-      sprint: teamData.sprint || 'Sprint 1',
-      velocity: teamData.velocity || 40
-    }
-    setTeams(prev => [newTeam, ...prev])
-    toast.success(`Equipo "${newTeam.name}" creado para el proyecto "${newTeam.project}"`, 3000)
-  }, [toast, user])
-
-  const updateTeam = useCallback((updatedTeam) => {
-    setTeams(prev => prev.map(t => t.id === updatedTeam.id ? updatedTeam : t))
-  }, [])
-
-  const deleteTeam = useCallback((teamId) => {
-    setTeams(prev => prev.filter(t => t.id !== teamId))
-    toast.info('Equipo disuelto exitosamente', 2000)
-  }, [toast])
 
   const value = useMemo(() => ({
     columns,
     allTasks,
-    epics,
     workspaces,
     fetchWorkspaces,
-    teams,
-    teamMembers,
-    addTeamMember,
-    removeTeamMember,
-    addTeam,
-    updateTeam,
-    deleteTeam,
-    addEpic,
-    updateEpic,
-    deleteEpic,
     getTaskById,
     addTask,
     updateTask,
@@ -638,19 +510,8 @@ export function TaskProvider({ children }) {
   }), [
     columns,
     allTasks,
-    epics,
     workspaces,
     fetchWorkspaces,
-    teams,
-    teamMembers,
-    addTeamMember,
-    removeTeamMember,
-    addTeam,
-    updateTeam,
-    deleteTeam,
-    addEpic,
-    updateEpic,
-    deleteEpic,
     getTaskById,
     addTask,
     updateTask,

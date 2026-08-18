@@ -7,7 +7,7 @@ import { useToast } from '../context/ToastContext.jsx'
 
 export default function EspaciosTrabajo() {
   const { token } = useAuth()
-  const { allTasks, fetchWorkspaces: syncGlobalWorkspaces, teamMembers } = useTasks()
+  const { allTasks, fetchWorkspaces: syncGlobalWorkspaces } = useTasks()
   const toast = useToast()
   const navigate = useNavigate()
 
@@ -163,7 +163,7 @@ export default function EspaciosTrabajo() {
                       </span>
                       <span className="flex items-center gap-1">
                         <Users size={13} className="text-lavender" />
-                        {ws.memberCount || teamMembers.length} mbrs
+                        {ws.memberCount || 0} mbrs
                       </span>
                     </div>
 
