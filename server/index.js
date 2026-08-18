@@ -8,7 +8,12 @@ import { getDbConnection, initializeDb } from './db.js'
 
 // Transporter para enviar correos
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 587,
+  secure: false, // STARTTLS
+  connectionTimeout: 5000,
+  greetingTimeout: 5000,
+  socketTimeout: 5000,
   auth: {
     user: 'pruebasschool6@gmail.com',
     pass: 'oljclmrgcztfimdt' // App Password proporcionada
