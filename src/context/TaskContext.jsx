@@ -279,6 +279,12 @@ export function TaskProvider({ children }) {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
+        // Limpiar de localStorage también para evitar que el failsafe de reinicio de servidor lo reviva si es la última tarea
+        setColumns(prev => {
+          const newCols = prev.map(col => ({ ...col, tasks: col.tasks.filter(t => t.id !== taskId) }))
+          try { localStorage.setItem('schoolboard_v3_clean_tasks', JSON.stringify(newCols)) } catch (e) {}
+          return newCols
+        })
         await fetchTasks()
         toast.info('Actividad eliminada definitivamente', 2500)
       } else {
