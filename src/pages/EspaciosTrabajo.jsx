@@ -180,7 +180,7 @@ export default function EspaciosTrabajo() {
             })}
           </div>
         </div>
-      </div>
+      )}
     </div>
 
     {showModal && (
