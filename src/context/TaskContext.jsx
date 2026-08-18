@@ -598,6 +598,10 @@ export function TaskProvider({ children }) {
   }, [token, fetchTeams, toast])
 
   const value = useMemo(() => ({
+    epics,
+    addEpic,
+    updateEpic,
+    deleteEpic,
     columns,
     allTasks,
     workspaces,
@@ -623,6 +627,10 @@ export function TaskProvider({ children }) {
     addEvidenceFile,
     deleteEvidence
   }), [
+    epics,
+    addEpic,
+    updateEpic,
+    deleteEpic,
     columns,
     allTasks,
     workspaces,

@@ -11,13 +11,318 @@ import {
 
 
 
+function CreateEpicModal({ isOpen, onClose, onCreateEpic }) {
+  const [title, setTitle] = useState('')
+  const [tagsInput, setTagsInput] = useState('')
+  const toast = useToast()
+
+  if (!isOpen) return null
+
+  function handleSubmit(e) {
+    e.preventDefault()
+    if (!title.trim()) return
+    const tagsList = tagsInput.split(',').map(t => t.trim().toUpperCase()).filter(Boolean)
+    const newId = `E-${Math.floor(100 + Math.random() * 900)}`
+    
+    onCreateEpic({
+      id: newId,
+      title: title.trim(),
+      tags: tagsList.length ? tagsList : ['GENERAL'],
+      progress: 0,
+      items: [] // Inicia completamente limpio sin historias invasivas
+    })
+
+    toast.success(`┬íM├│dulo "${title.trim()}" registrado correctamente en tu proyecto!`, 3500)
+    setTitle('')
+    setTagsInput('')
+    onClose()
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/75 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      <div className="relative w-full max-w-lg bg-[#14141c] border border-border rounded-2xl shadow-2xl p-6 z-10 animate-in zoom-in-95 duration-200">
+        <div className="flex items-center justify-between pb-4 mb-4 border-b border-border">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-lavender/15 text-lavender flex items-center justify-center border border-lavender/25 shadow-sm">
+              <Sparkles size={16} />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-text-primary">Crear Nuevo M├│dulo o Categor├¡a (├ëpica)</h3>
+              <p className="text-xs text-text-secondary">Agrupa tus tareas por grandes temas, etapas o materias de estudio.</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1 rounded-lg text-text-muted hover:text-white transition-colors">
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs text-text-secondary font-bold uppercase mb-1">Nombre del M├│dulo / Categor├¡a *</label>
+            <input
+              type="text"
+              required
+              placeholder="Ej. Proyecto Final de Desarrollo, Investigaci├│n, Dise├▒o..."
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="input-base"
+              autoFocus
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-text-secondary font-bold uppercase mb-1">Etiquetas (opcional, separadas por coma)</label>
+            <input
+              type="text"
+              placeholder="Ej. INVESTIGACI├ôN, EXPO, DISE├æO"
+              value={tagsInput}
+              onChange={(e) => setTagsInput(e.target.value)}
+              className="input-base"
+            />
+          </div>
+          
+          <div className="flex items-center justify-end gap-2.5 pt-4 border-t border-border mt-6">
+            <button type="button" onClick={onClose} className="px-4 py-2.5 rounded-xl border border-border bg-bg-card hover:bg-white/5 text-xs font-semibold text-text-secondary transition-all">
+              Cancelar
+            </button>
+            <button type="submit" className="px-5 py-2.5 rounded-xl bg-lavender hover:bg-lavender-hover text-white text-xs font-bold shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-1.5">
+              <Plus size={15} />
+              Guardar Iniciativa
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function EpicBacklogRow({ epic }) {
+  const { updateEpic, addTask } = useTasks()
+  const toast = useToast()
+  
+  const [open, setOpen] = useState(true)
+  const [isAdding, setIsAdding] = useState(false)
+  const [newStoryTitle, setNewStoryTitle] = useState('')
+
+  function handleStatusCycle(itemId, currentStatus) {
+    updateEpic(epic.id, (prev) => {
+      const items = prev.items || []
+      const nextItems = items.map(i => {
+        if (i.id !== itemId) return i
+        const nextSt = i.status === 'Pendiente' 
+          ? 'En proceso' 
+          : i.status === 'En proceso' 
+          ? 'Completado' 
+          : 'Pendiente'
+        // Soporta 'Completada' y 'Completado' indistintamente
+        const finalSt = nextSt === 'Completado' ? 'Completado' : nextSt
+        return { ...i, status: finalSt }
+      })
+      
+      const completed = nextItems.filter(i => i.status?.toLowerCase().includes('completad')).length
+      const prog = nextItems.length ? Math.round((completed / nextItems.length) * 100) : 0
+      return { items: nextItems, progress: prog }
+    })
+    toast.info('Estado y progreso recalculado interactivamente', 1500)
+  }
+
+  function handlePromoteToBoard(item, e) {
+    e.stopPropagation()
+    addTask('pendiente', {
+      title: item.title,
+      description: `Actividad creada desde el m├│dulo [${epic.id}] ${epic.title}.`,
+      priority: 'medium',
+      assignee: 'Sin asignar',
+      project: epic.title || 'M├│dulo Principal'
+    })
+    toast.success(`­ƒÜÇ Tarea "${item.title}" enviada exitosamente a tu columna 'Pendiente' arriba`, 4000)
+  }
+
+  function handleDeleteItem(itemId, e) {
+    e.stopPropagation()
+    updateEpic(epic.id, (prev) => {
+      const items = prev.items || []
+      const nextItems = items.filter(i => i.id !== itemId)
+      const completed = nextItems.filter(i => i.status?.toLowerCase().includes('completad')).length
+      const prog = nextItems.length ? Math.round((completed / nextItems.length) * 100) : 0
+      return { items: nextItems, progress: prog }
+    })
+    toast.info('Historia eliminada del Epic', 2000)
+  }
+
+  function handleCreateStory(e) {
+    e.preventDefault()
+    if (!newStoryTitle.trim()) return
+    
+    updateEpic(epic.id, (prev) => {
+      const items = prev.items || []
+      const newId = `${epic.id}-${items.length + 1}`
+      const nextItems = [...items, { id: newId, title: newStoryTitle.trim(), status: 'Pendiente' }]
+      const completed = nextItems.filter(i => i.status?.toLowerCase().includes('completad')).length
+      const prog = Math.round((completed / nextItems.length) * 100)
+      return { items: nextItems, progress: prog }
+    })
+    
+    toast.success('Nueva historia incorporada en vivo al Epic', 2500)
+    setNewStoryTitle('')
+    setIsAdding(false)
+  }
+
+  const items = epic.items || []
+  const completedCount = items.filter(i => i.status?.toLowerCase().includes('completad')).length
+  const displayProgress = items.length > 0 ? Math.round((completedCount / items.length) * 100) : (epic.progress || 0)
+
+  return (
+    <div className="border-b border-border/70 last:border-0 py-4 transition-colors">
+      <div
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between text-left cursor-pointer hover:text-lavender transition-all duration-200 group py-1.5 px-2 rounded-xl hover:bg-white/[0.02] select-none"
+      >
+        <div className="flex items-center gap-2.5">
+          {open ? <ChevronDown size={18} className="text-lavender group-hover:scale-110 transition-transform" /> : <ChevronRight size={18} className="text-text-muted group-hover:text-lavender transition-all" />}
+          <div>
+            <p className="text-sm font-bold text-text-primary group-hover:text-white transition-colors flex items-center gap-2">
+              <span className="text-text-secondary font-mono text-xs px-2 py-0.5 rounded bg-white/5 border border-white/5 shadow-inner font-extrabold">{epic.id}</span>
+              {epic.title}
+            </p>
+            <div className="flex flex-wrap gap-1.5 mt-2">
+              {epic.tags?.map((tag) => (
+                <span 
+                  key={tag} 
+                  className="text-[9px] font-extrabold px-2.5 py-0.5 rounded-md bg-lavender/15 text-lavender border border-lavender/25 uppercase tracking-wider shadow-sm"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+        
+        <div className="flex items-center gap-3 w-40">
+          <div className="flex-1 h-2.5 bg-white/10 rounded-full overflow-hidden p-0.5 border border-white/5 shadow-inner">
+            <div 
+              className="h-full bg-gradient-to-r from-lavender/80 to-lavender rounded-full transition-all duration-500 shadow-sm" 
+              style={{ width: `${displayProgress}%` }} 
+            />
+          </div>
+          <span className="text-xs text-lavender w-10 text-right font-black tracking-tight">{displayProgress}%</span>
+        </div>
+      </div>
+
+      {open && (
+        <div className="pl-9 pr-3 mt-3.5 space-y-2.5 animate-in slide-in-from-top-2 fade-in duration-200">
+          {items.map((item) => {
+            const isComp = item.status?.toLowerCase().includes('completad')
+            const isProc = item.status?.toLowerCase().includes('proceso')
+            return (
+              <div 
+                key={item.id} 
+                className="flex flex-col sm:flex-row sm:items-center justify-between py-2.5 px-4 rounded-xl bg-bg-field/50 hover:bg-bg-field border border-border-field hover:border-lavender/40 hover:shadow-md transition-all duration-200 gap-3 group/item"
+              >
+                <div className="flex items-center gap-2.5 truncate">
+                  <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${isComp ? 'bg-priority-low shadow-[0_0_8px_rgba(16,185,129,0.4)]' : isProc ? 'bg-lavender shadow-[0_0_8px_rgba(139,124,246,0.4)] animate-pulse' : 'bg-text-muted'}`} />
+                  <span className="text-text-muted font-mono text-xs font-black mr-1">{item.id}</span>
+                  <span className={`text-xs font-bold transition-all ${isComp ? 'line-through text-text-muted' : 'text-text-primary group-hover/item:text-white'}`}>
+                    {item.title}
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
+                  {/* Bot├│n Promover a Tablero Real */}
+                  <button
+                    onClick={(e) => handlePromoteToBoard(item, e)}
+                    className="flex items-center gap-1.5 text-[11px] font-extrabold bg-lavender/10 hover:bg-lavender text-lavender hover:text-white border border-lavender/25 px-3 py-1.5 rounded-xl transition-all duration-200 active:scale-95 shadow-sm group/btn select-none"
+                    title="Crear una tarjeta real de esta historia en la columna Pendiente de tu tablero Kanban"
+                  >
+                    <Rocket size={13} className="group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                    Enviar al Tablero
+                  </button>
+
+                  {/* Bot├│n Estado Interactivo */}
+                  <button
+                    onClick={() => handleStatusCycle(item.id, item.status)}
+                    title="Haz clic para alternar el estado en vivo (Pendiente Ô×ö En proceso Ô×ö Completada)"
+                    className={`text-[10px] font-extrabold uppercase tracking-wider px-3 py-1.5 rounded-xl shadow-sm transition-all duration-200 active:scale-90 flex items-center gap-1.5 select-none ${
+                      isComp
+                        ? 'bg-priority-low/15 hover:bg-priority-low hover:text-white text-priority-low border border-priority-low/30'
+                        : isProc
+                        ? 'bg-lavender/15 hover:bg-lavender hover:text-white text-lavender border border-lavender/30'
+                        : 'bg-white/5 hover:bg-white/15 text-text-secondary border border-white/10'
+                    }`}
+                  >
+                    {item.status || 'Pendiente'}
+                    <RefreshCw size={11} className="opacity-70 group-hover:rotate-180 transition-transform duration-300" />
+                  </button>
+
+                  {/* Bot├│n Borrar */}
+                  <button
+                    onClick={(e) => handleDeleteItem(item.id, e)}
+                    className="p-1.5 rounded-lg text-text-muted hover:text-priority-high hover:bg-priority-high/10 opacity-70 group-hover/item:opacity-100 transition-all duration-150"
+                    title="Eliminar historia de usuario de esta Iniciativa"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+
+          {items.length === 0 && (
+            <p className="text-xs text-text-muted italic py-2 pl-2">A├║n no has agregado tareas a este m├│dulo. ┬íHaz clic en el bot├│n de abajo para registrar la primera!</p>
+          )}
+
+          {/* ├ürea animada para a├▒adir nuevas historias en el tablero */}
+          {isAdding ? (
+            <form onSubmit={handleCreateStory} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-2 animate-in fade-in duration-200">
+              <input
+                type="text"
+                autoFocus
+                placeholder="Escribe el t├¡tulo o nombre de tu nueva tarea para este m├│dulo..."
+                value={newStoryTitle}
+                onChange={(e) => setNewStoryTitle(e.target.value)}
+                className="input-base py-2.5 text-xs flex-1 font-semibold"
+              />
+              <div className="flex gap-2">
+                <button
+                  type="submit"
+                  className="px-4 py-2.5 bg-lavender hover:bg-lavender-hover text-white text-xs font-bold rounded-xl shadow-md active:scale-95 transition-all flex items-center gap-1"
+                >
+                  <Plus size={14} />
+                  Guardar tarea
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setIsAdding(false); setNewStoryTitle(''); }}
+                  className="px-3.5 py-2.5 bg-bg-card border border-border hover:bg-white/5 text-text-secondary text-xs font-semibold rounded-xl transition-all"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button
+              onClick={() => setIsAdding(true)}
+              className="flex items-center gap-1.5 text-xs font-bold text-text-secondary hover:text-lavender py-2 px-3 rounded-xl hover:bg-lavender/5 transition-all duration-200 group/add mt-2 select-none active:scale-95 border border-transparent hover:border-lavender/20"
+            >
+              <Plus size={15} className="text-lavender group-hover/add:scale-125 transition-transform duration-200" />
+              A├▒adir nueva tarea o historia a este m├│dulo
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+
 export default function Tablero() {
-  const { columns, moveTask, workspaces, allTasks, updateTask } = useTasks()
+  const { columns, moveTask, workspaces, allTasks, updateTask, epics, addEpic, updateEpic } = useTasks()
   const navigate = useNavigate()
   const toast = useToast()
   
   const [selectedTaskId, setSelectedTaskId] = useState(null)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
+  const [isCreateEpicOpen, setIsCreateEpicOpen] = useState(false)
 
   const [activeWorkspace, setActiveWorkspace] = useState('ALL')
   const [searchQuery, setSearchQuery] = useState('')
@@ -84,7 +389,8 @@ export default function Tablero() {
       sprint: "Sprint Actual",
       totalActividades: allTasksCount,
       espacios: workspaces,
-      columnas: columns
+      columnas: columns,
+      epics: epics
     }
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
