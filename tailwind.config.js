@@ -1,7 +1,7 @@
 function withOpacity(variableName, fallback) {
   return ({ opacityValue }) => {
     if (opacityValue !== undefined) {
-      return `color-mix(in srgb, var(${variableName}, ${fallback}) ${opacityValue * 100}%, transparent)`
+      return `color-mix(in srgb, var(${variableName}, ${fallback}) calc(${opacityValue} * 100%), transparent)`
     }
     return `var(${variableName}, ${fallback})`
   }
