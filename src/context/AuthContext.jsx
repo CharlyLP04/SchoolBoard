@@ -36,7 +36,7 @@ export function AuthProvider({ children }) {
         throw new Error(data.error || 'Credenciales incorrectas')
       }
 
-      localStorage.setItem(SESSION_KEY, JSON.stringify(data))
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(data))
       setUser(data)
       return data
     } catch (error) {
@@ -66,7 +66,7 @@ export function AuthProvider({ children }) {
         throw new Error(data.error || 'No se pudo completar el registro')
       }
 
-      localStorage.setItem(SESSION_KEY, JSON.stringify(data))
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(data))
       setUser(data)
       return data
     } catch (error) {
