@@ -2,23 +2,10 @@ import express from 'express'
 import cors from 'cors'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
-import crypto from 'crypto'
-import nodemailer from 'nodemailer'
+import { fileURLToPath } from 'url'
 import { getDbConnection, initializeDb } from './db.js'
 
-// Transporter para enviar correos
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 587,
-  secure: false, // STARTTLS
-  connectionTimeout: 5000,
-  greetingTimeout: 5000,
-  socketTimeout: 5000,
-  auth: {
-    user: 'pruebasschool6@gmail.com',
-    pass: 'oljclmrgcztfimdt' // App Password proporcionada
-  }
-})
+const RESEND_API_KEY = 're_iFBkWMmu_NthW2XmwWxMmx5GwVWANvYpS'
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -105,26 +92,36 @@ app.post('/api/auth/register-send-code', async (req, res) => {
     
     await db.close()
 
-    const mailOptions = {
-      from: '"SchoolBoard" <pruebasschool6@gmail.com>',
-      to: email,
-      subject: 'Tu código de verificación - SchoolBoard',
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; text-align: center;">
-          <h2 style="color: #7c3aed;">Código de Verificación</h2>
-          <p>Hola ${name}, usa el siguiente código para completar tu registro:</p>
-          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0;">
-            <h1 style="letter-spacing: 5px; color: #111; margin: 0;">${code}</h1>
-          </div>
-          <p style="color: #666; font-size: 14px;">Este código expira en 15 minutos.</p>
-        </div>
-      `
-    }
-    
     try {
-      await transporter.sendMail(mailOptions)
+      const resendRes = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          from: 'onboarding@resend.dev',
+          to: email,
+          subject: 'Tu código de verificación - SchoolBoard',
+          html: `
+            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; text-align: center;">
+              <h2 style="color: #7c3aed;">Código de Verificación</h2>
+              <p>Hola ${name}, usa el siguiente código para completar tu registro:</p>
+              <div style="background-color: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0;">
+                <h1 style="letter-spacing: 5px; color: #111; margin: 0;">${code}</h1>
+              </div>
+              <p style="color: #666; font-size: 14px;">Este código expira en 15 minutos.</p>
+            </div>
+          `
+        })
+      });
+
+      if (!resendRes.ok) {
+        const errorData = await resendRes.json();
+        throw new Error(errorData.message || 'Error al enviar por Resend');
+      }
     } catch (emailError) {
-      console.error('SMTP Error:', emailError)
+      console.error('Resend Error:', emailError)
       return res.status(500).json({ error: 'Error del servidor de correos: ' + emailError.message })
     }
 
@@ -183,23 +180,29 @@ app.post('/api/auth/register', async (req, res) => {
 
     await logActivity(`Nueva cuenta registrada: "${newUser.name}"`, newUser.name)
 
-    const mailOptions = {
-      from: '"SchoolBoard" <pruebasschool6@gmail.com>',
-      to: newUser.email,
-      subject: '¡Bienvenido a SchoolBoard! 🚀',
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #7c3aed;">¡Hola ${newUser.name}! 👋</h2>
-          <p>Tu cuenta en <strong>SchoolBoard</strong> ha sido creada exitosamente.</p>
-          <p>Ya puedes empezar a gestionar tus proyectos escolares de forma ágil y colaborativa junto con tu equipo.</p>
-          <br>
-          <p>¡Mucho éxito en tus proyectos!</p>
-          <p style="color: #666; font-size: 12px;">El equipo de SchoolBoard</p>
-        </div>
-      `
-    }
-    
-    transporter.sendMail(mailOptions).catch(err => console.error('Error sending welcome email:', err))
+    // Enviar correo de bienvenida con Resend
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'onboarding@resend.dev',
+        to: newUser.email,
+        subject: '¡Bienvenido a SchoolBoard! 🚀',
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #7c3aed;">¡Hola ${newUser.name}! 👋</h2>
+            <p>Tu cuenta en <strong>SchoolBoard</strong> ha sido creada exitosamente.</p>
+            <p>Ya puedes empezar a gestionar tus proyectos escolares de forma ágil y colaborativa junto con tu equipo.</p>
+            <br>
+            <p>¡Mucho éxito en tus proyectos!</p>
+            <p style="color: #666; font-size: 12px;">El equipo de SchoolBoard</p>
+          </div>
+        `
+      })
+    }).catch(err => console.error('Error sending welcome email with Resend:', err))
 
     res.status(201).json({
       token,
