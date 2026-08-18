@@ -153,9 +153,9 @@
     border-color: var(--color-border) !important;
   }
 
-  /* FIX: Prevenir fallback a blanco cuando se usan opacidades inválidas de Tailwind como border-border/80 */
-  [class*="border-border\/"] {
-    border-color: var(--color-border) !important;
+  /* FIX: Suavizar los bordes blancos en modo oscuro porque resaltan demasiado y se ven chistosos */
+  :root:not(.light) [class*="border-white\/"] {
+    border-color: var(--color-border-field) !important;
   }
 
   /* Overlays / modales backdrop */
