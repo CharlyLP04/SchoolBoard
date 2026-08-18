@@ -116,7 +116,12 @@ app.post('/api/auth/register-send-code', async (req, res) => {
       `
     }
     
-    transporter.sendMail(mailOptions).catch(err => console.error('Error sending verification email:', err))
+    try {
+      await transporter.sendMail(mailOptions)
+    } catch (emailError) {
+      console.error('SMTP Error:', emailError)
+      return res.status(500).json({ error: 'Error del servidor de correos: ' + emailError.message })
+    }
 
     res.json({ success: true, message: 'Se ha enviado un código de verificación a tu correo.' })
   } catch (error) {
