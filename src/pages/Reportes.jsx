@@ -512,8 +512,9 @@ export default function Reportes() {
           </button>
         </div>
       </div>
+    </div>
 
-      {/* Modal del Visor de Auditoría */}
+    {/* Modal del Visor de Auditoría */}
       <AuditLogModal
         isOpen={isAuditModalOpen}
         onClose={() => setIsAuditModalOpen(false)}
