@@ -641,8 +641,9 @@ export default function Tablero() {
           )}
         </div>
       </div>
+    </div>
 
-      {/* Modales y Drawers */}
+    {/* Modales y Drawers */}
       <CreateEpicModal
         isOpen={isCreateEpicOpen}
         onClose={() => setIsCreateEpicOpen(false)}

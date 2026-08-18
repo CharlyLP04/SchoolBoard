@@ -181,8 +181,9 @@ export default function EspaciosTrabajo() {
           </div>
         </div>
       </div>
+    </div>
 
-      {showModal && (
+    {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="absolute inset-0 bg-black/75 backdrop-blur-md transition-opacity" onClick={() => setShowModal(false)} />
           <div className="relative w-full max-w-md bg-[#141422] border border-white/10 rounded-3xl shadow-2xl p-6 z-10">

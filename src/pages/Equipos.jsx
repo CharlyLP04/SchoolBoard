@@ -958,8 +958,9 @@ export default function Equipos() {
           )}
         </div>
       </div>
+    </div>
 
-      {/* Modales */}
+    {/* Modales */}
       <RegisterCoworkerModal
         isOpen={isCoworkerModalOpen}
         onClose={() => setIsCoworkerModalOpen(false)}
