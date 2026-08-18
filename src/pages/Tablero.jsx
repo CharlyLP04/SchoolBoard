@@ -313,7 +313,7 @@ function EpicBacklogRow({ epic }) {
 }
 
 export default function Tablero() {
-  const { columns, moveTask, epics, addEpic, workspaces, teamMembers, allTasks } = useTasks()
+  const { columns, moveTask, epics, addEpic, workspaces, teamMembers, allTasks, updateTask } = useTasks()
   const navigate = useNavigate()
   const toast = useToast()
   
@@ -327,7 +327,7 @@ export default function Tablero() {
   const [assigneeFilter, setAssigneeFilter] = useState('')
 
   function handleDropTask(taskId, targetColumnId) {
-    moveTask(taskId, targetColumnId)
+    updateTask(taskId, { status: targetColumnId })
   }
 
   function handleAddTask(columnId) {
