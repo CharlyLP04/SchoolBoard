@@ -127,6 +127,11 @@
   html.light [class~="text-text-muted"] {
     color: var(--color-text-muted) !important;
   }
+  
+  /* Textos verde neón muy chillones → verde oscuro en modo claro */
+  html.light [class~="text-emerald-400"] {
+    color: #059669 !important; /* emerald-600 */
+  }
 
   /* Superficies con opacidades de blanco → fondo claro */
   html.light [class~="bg-white\/5"],

@@ -92,7 +92,7 @@ export default function EspaciosTrabajo() {
           className="flex items-center justify-center gap-2 bg-gradient-to-r from-lavender to-emerald-500 hover:opacity-95 text-white rounded-2xl px-6 py-3 text-xs font-black transition-all shadow-lg shadow-lavender/25 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 select-none"
         >
           <Plus size={16} strokeWidth={3} />
-          + Fundar Nuevo Espacio
+          Fundar Nuevo Espacio
         </button>
       </div>
 
