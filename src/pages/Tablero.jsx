@@ -297,6 +297,8 @@ export default function Tablero() {
 
 
 
+    </div>
+
       {selectedTaskId && (
         <EditTaskDrawer
           taskId={selectedTaskId}
