@@ -227,13 +227,68 @@ function CreateSquadModal({ isOpen, onClose, onCreateSquad, workspaces, teamMemb
   )
 }
 
+function TeamCard({ team, onOpenDetails, onDeleteTeam, workspaces }) {
+  const wsName = workspaces.find(ws => ws.id === team.workspace_id)?.name || 'Espacio General'
+  return (
+    <div 
+      className="card p-6 flex-1 min-w-[300px] hover:border-lavender/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-lavender/15 group flex flex-col justify-between cursor-pointer rounded-3xl bg-[#141420]/80 border border-white/10 relative" 
+      onClick={() => onOpenDetails(team)}
+    >
+      <div>
+        <div className="flex items-start justify-between gap-2 mb-4">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-black text-base text-white group-hover:text-lavender transition-colors truncate">{team.name}</h3>
+            <span className="inline-flex items-center gap-1 text-[11px] font-extrabold text-lavender bg-lavender/10 border border-lavender/20 px-2.5 py-1 rounded-lg mt-1.5 truncate max-w-full">
+              <FolderKanban size={13} className="flex-shrink-0" />
+              <span className="truncate">{wsName}</span>
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => onOpenDetails(team)}
+              className="text-xs text-lavender bg-lavender/10 hover:bg-lavender hover:text-white px-3 py-1.5 rounded-xl font-extrabold transition-all duration-200 shadow-sm flex items-center gap-1 active:scale-95"
+            >
+              Configurar ⚙️
+            </button>
+            <button
+              onClick={() => onDeleteTeam(team.id)}
+              title="Eliminar grupo de trabajo"
+              className="p-2 text-text-muted hover:text-white bg-white/5 hover:bg-priority-high rounded-xl transition-all shadow-sm flex items-center justify-center active:scale-90 border border-white/5 hover:border-transparent"
+            >
+              <Trash2 size={15} />
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between pt-5 border-t border-white/10 mt-5">
+        <div>
+          <p className="text-[10px] uppercase font-extrabold text-text-secondary mb-1.5">Miembros del Grupo</p>
+          <div className="flex -space-x-2">
+            {(team.members || []).slice(0, 4).map((m, i) => (
+              <div
+                key={i}
+                className="w-8 h-8 rounded-xl bg-gradient-to-br from-lavender/30 to-emerald-400/30 border-2 border-[#141420] flex items-center justify-center text-[11px] font-black text-white shadow-sm"
+                title={`Colaborador: ${m.name}`}
+              >
+                {m.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+              </div>
+            ))}
+            {(team.members || []).length > 4 && (
+              <div className="w-8 h-8 rounded-xl bg-white/10 border-2 border-[#141420] flex items-center justify-center text-[10px] font-black text-white">
+                +{(team.members || []).length - 4}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Equipos() {
   const { 
     allTasks, 
-    epics, 
-    addEpic, 
-    updateEpic, 
-    deleteEpic,
     teams,
     addTeam,
     updateTeam,
@@ -248,30 +303,7 @@ function Equipos() {
   const [selectedTeam, setSelectedTeam] = useState(null)
   const [forceOpenState, setForceOpenState] = useState(null)
   const [isSquadModalOpen, setIsSquadModalOpen] = useState(false)
-  const [isEpicModalOpen, setIsEpicModalOpen] = useState(false)
   const [isCoworkerModalOpen, setIsCoworkerModalOpen] = useState(false)
-
-  function handleAddEpicItem(epicId, itemTitle) {
-    const ep = epics.find(e => e.id === epicId)
-    if (!ep) return
-    const newItems = [...(ep.items || []), { id: `HU-${Math.floor(10 + Math.random() * 89)}`, title: itemTitle, status: 'Pendiente' }]
-    const comp = newItems.filter(i => i.status === 'Completada').length
-    const prog = Math.round((comp / newItems.length) * 100)
-    updateEpic(epicId, () => ({ items: newItems, progress: prog }))
-  }
-
-  function handleToggleEpicItemStatus(epicId, itemId) {
-    const ep = epics.find(e => e.id === epicId)
-    if (!ep) return
-    const nextItems = (ep.items || []).map(item => {
-      if (item.id !== itemId) return item
-      const nextSt = item.status === 'Pendiente' ? 'En proceso' : item.status === 'En proceso' ? 'Completada' : 'Pendiente'
-      return { ...item, status: nextSt }
-    })
-    const comp = nextItems.filter(i => i.status === 'Completada').length
-    const prog = nextItems.length ? Math.round((comp / nextItems.length) * 100) : 0
-    updateEpic(epicId, () => ({ items: nextItems, progress: prog }))
-  }
 
   return (
     <>
@@ -300,18 +332,10 @@ function Equipos() {
           
           <button
             onClick={() => setIsSquadModalOpen(true)}
-            className="flex items-center justify-center gap-2 bg-bg-field hover:bg-white/10 text-white border border-white/10 hover:border-lavender/40 rounded-2xl px-5 py-3 text-xs font-black transition-all shadow-sm active:scale-95 select-none"
+            className="flex items-center justify-center gap-2 bg-lavender hover:bg-lavender-hover text-white rounded-2xl px-5 py-3 text-xs font-black shadow-lg shadow-lavender/25 transition-all active:scale-95 select-none"
           >
             <Users size={16} className="text-lavender" />
             Fundar Grupo de Trabajo
-          </button>
-
-          <button
-            onClick={() => setIsEpicModalOpen(true)}
-            className="flex items-center justify-center gap-2 bg-bg-field hover:bg-white/10 text-white border border-white/10 hover:border-lavender/40 rounded-2xl px-5 py-3 text-xs font-black transition-all shadow-sm active:scale-95 select-none"
-          >
-            <Plus size={16} className="text-lavender" strokeWidth={3} />
-            Nueva Iniciativa (Épica)
           </button>
         </div>
       </div>
@@ -411,7 +435,7 @@ function Equipos() {
         {teams.length > 0 ? (
           <div className="flex flex-wrap gap-5">
             {teams.map((team) => (
-              <TeamCard key={team.id} team={team} onOpenDetails={(t) => setSelectedTeam(t)} onDeleteTeam={deleteTeam} />
+              <TeamCard key={team.id} team={team} onOpenDetails={(t) => setSelectedTeam(t)} onDeleteTeam={deleteTeam} workspaces={workspaces} />
             ))}
           </div>
         ) : (
