@@ -468,3 +468,5 @@ function Equipos() {
     </>
   )
 }
+
+export default Equipos;
