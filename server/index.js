@@ -290,20 +290,24 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     )
     const resetUrl = `https://schoolboard-frontend.vercel.app/restablecer-contrasena?token=${token}`
 
-    const mailOptions = {
-      from: '"SchoolBoard" <pruebasschool6@gmail.com>',
-      to: user.email,
-      subject: 'Recuperación de Contraseña - SchoolBoard',
-      html: `
-        <h3>Hola ${user.name},</h3>
-        <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para crear una nueva:</p>
-        <a href="${resetUrl}">Restablecer mi contraseña</a>
-        <p>Si no solicitaste esto, ignora este correo.</p>
-      `
-    }
-    
-    // Send email asynchronously
-    transporter.sendMail(mailOptions).catch(err => console.error('Error sending email:', err))
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'onboarding@resend.dev',
+        to: user.email,
+        subject: 'Recuperación de Contraseña - SchoolBoard',
+        html: `
+          <h3>Hola ${user.name},</h3>
+          <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para crear una nueva:</p>
+          <a href="${resetUrl}">Restablecer mi contraseña</a>
+          <p>Si no solicitaste esto, ignora este correo.</p>
+        `
+      })
+    }).catch(err => console.error('Error sending reset email with Resend:', err))
 
     await logActivity(`Solicitud de recuperación de contraseña para "${user.email}"`, user.name)
 
@@ -951,20 +955,24 @@ app.post('/api/workspaces/:id/invite', authenticateToken, async (req, res) => {
 
     const workspaceUrl = `https://schoolboard-frontend.vercel.app/espacios/${id}`
 
-    const mailOptions = {
-      from: '"SchoolBoard" <pruebasschool6@gmail.com>',
-      to: invitedUser.email,
-      subject: 'Invitación a Espacio de Trabajo - SchoolBoard',
-      html: `
-        <h3>Hola ${invitedUser.name},</h3>
-        <p>¡Has sido invitado al espacio de trabajo <strong>${workspace?.name}</strong> por ${req.user.name}!</p>
-        <p>Puedes acceder al espacio de trabajo haciendo clic en el siguiente enlace:</p>
-        <a href="${workspaceUrl}">Ir al Espacio de Trabajo</a>
-      `
-    }
-
-    // Send email asynchronously
-    transporter.sendMail(mailOptions).catch(err => console.error('Error sending invite email:', err))
+    fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${RESEND_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: 'onboarding@resend.dev',
+        to: invitedUser.email,
+        subject: 'Invitación a Espacio de Trabajo - SchoolBoard',
+        html: `
+          <h3>Hola ${invitedUser.name},</h3>
+          <p>¡Has sido invitado al espacio de trabajo <strong>${workspace?.name}</strong> por ${req.user.name}!</p>
+          <p>Puedes acceder al espacio de trabajo haciendo clic en el siguiente enlace:</p>
+          <a href="${workspaceUrl}">Ir al Espacio de Trabajo</a>
+        `
+      })
+    }).catch(err => console.error('Error sending invite email with Resend:', err))
 
     await logActivity(`${invitedUser.name} fue invitado al espacio "${workspace?.name}" por ${req.user.name}`, req.user.name)
 
