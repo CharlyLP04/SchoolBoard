@@ -97,7 +97,7 @@ function CreateEpicModal({ isOpen, onClose, onCreateEpic }) {
 }
 
 function EpicBacklogRow({ epic }) {
-  const { updateEpic, addTask } = useTasks()
+  const { updateEpic, deleteEpic, addTask } = useTasks()
   const toast = useToast()
   
   const [open, setOpen] = useState(true)
@@ -198,14 +198,29 @@ function EpicBacklogRow({ epic }) {
           </div>
         </div>
         
-        <div className="flex items-center gap-3 w-40">
-          <div className="flex-1 h-2.5 bg-white/10 rounded-full overflow-hidden p-0.5 border border-white/5 shadow-inner">
-            <div 
-              className="h-full bg-gradient-to-r from-lavender/80 to-lavender rounded-full transition-all duration-500 shadow-sm" 
-              style={{ width: `${displayProgress}%` }} 
-            />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 w-40">
+            <div className="flex-1 h-2.5 bg-white/10 rounded-full overflow-hidden p-0.5 border border-white/5 shadow-inner">
+              <div 
+                className="h-full bg-gradient-to-r from-lavender/80 to-lavender rounded-full transition-all duration-500 shadow-sm" 
+                style={{ width: `${displayProgress}%` }} 
+              />
+            </div>
+            <span className="text-xs text-lavender w-10 text-right font-black tracking-tight">{displayProgress}%</span>
           </div>
-          <span className="text-xs text-lavender w-10 text-right font-black tracking-tight">{displayProgress}%</span>
+          
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              if (window.confirm(`¿Estás seguro de eliminar el módulo "${epic.title}" y todas sus tareas?`)) {
+                deleteEpic(epic.id);
+              }
+            }}
+            className="p-1.5 text-text-muted hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+            title="Eliminar este módulo completo"
+          >
+            <Trash2 size={16} />
+          </button>
         </div>
       </div>
 
