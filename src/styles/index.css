@@ -58,6 +58,12 @@
     transition: background-color 0.25s ease, color 0.25s ease;
   }
 
+  /* Global option styling to prevent native OS white backgrounds in dark mode */
+  option {
+    background-color: var(--surface-input);
+    color: var(--color-text-primary);
+  }
+
   /* ☀️ MODO CLARO: Override global robusto que funciona con Tailwind compilado */
   /* Se aplica a TODOS los descendientes del <html> cuando tiene clase .light */
   html.light {
@@ -101,7 +107,8 @@
   html.light [class~="input-base"],
   html.light input,
   html.light select,
-  html.light textarea {
+  html.light textarea,
+  html.light option {
     background-color: var(--color-bg-field) !important;
     color: var(--color-text-primary) !important;
     border-color: var(--color-border-field) !important;
@@ -183,8 +190,15 @@
   /* Barra de KPIs y workspace tabs */
   html.light [class~="bg-\[#141420\]\/80"],
   html.light [class~="bg-\[#14141c\]\/90"],
-  html.light [class~="bg-\[#14141c\]"] {
+  html.light [class~="bg-\[#14141c\]"],
+  html.light [class~="bg-\[#141422\]"],
+  html.light [class~="bg-\[#161626\]"] {
     background-color: var(--surface-modal-alt) !important;
+  }
+
+  /* Reset de inputs hardcodeados o tarjetas hijas */
+  html.light [class~="bg-\[#101018\]"] {
+    background-color: var(--surface-input) !important;
   }
 
   /* Scrollbar en modo claro */
