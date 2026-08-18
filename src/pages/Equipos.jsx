@@ -227,6 +227,216 @@ function CreateSquadModal({ isOpen, onClose, onCreateSquad, workspaces, teamMemb
   )
 }
 
+function TeamDetailModal({ team, isOpen, onClose, allTasks, onUpdateTeam, onDeleteTeam, teamMembers, onAddMemberToPool, workspaces = [] }) {
+  const toast = useToast()
+  const navigate = useNavigate()
+  const [newMemberName, setNewMemberName] = useState('')
+
+  if (!isOpen || !team) return null
+
+  // Mapeamos el workspace_id
+  const wsName = workspaces.find(ws => ws.id === team.workspace_id)?.name || 'Espacio General'
+  const membersList = team.members || []
+  
+  // Tareas asignadas a este proyecto (ahora workspace_id) o a alguno de los miembros
+  const teamTasks = allTasks.filter(t => t.workspace_id === team.workspace_id || membersList.map(m=>m.name).includes(t.assignee))
+
+  function handleAddMember(e) {
+    e.preventDefault()
+    toast.info('Para añadir un miembro, invítalo desde el directorio principal.', 3000)
+    setNewMemberName('')
+  }
+
+  function handleRemoveMember(memberId) {
+    toast.info('Para remover a un miembro, dirígete a la configuración del espacio.', 3000)
+  }
+
+  function handleUpdateField(field, val) {
+    onUpdateTeam({ ...team, [field]: val })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in duration-300">
+      <div className="absolute inset-0 bg-[#09090b]/80 backdrop-blur-sm transition-opacity" onClick={onClose} />
+      
+      <div className="relative w-full max-w-4xl bg-[#141420] border border-white/10 rounded-[2rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden z-10">
+        <div className="flex-shrink-0 flex items-center justify-between p-6 sm:p-8 border-b border-white/5 bg-[#1a1a2e]/50 backdrop-blur-md">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-lavender/20 to-emerald-400/20 border border-white/10 flex items-center justify-center text-lavender shadow-inner">
+              <Users size={28} />
+            </div>
+            <div>
+              <div className="flex items-center gap-3">
+                <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">{team.name}</h2>
+                <span className="px-3 py-1 bg-lavender/10 text-lavender border border-lavender/20 rounded-full text-[10px] font-extrabold uppercase tracking-widest">
+                  Grupo Activo
+                </span>
+              </div>
+              <p className="text-text-secondary text-sm mt-1 flex items-center gap-2">
+                <FolderKanban size={14} className="text-emerald-400" />
+                {wsName}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => onDeleteTeam(team.id)}
+              className="px-4 py-2 bg-red-500/10 text-red-400 hover:bg-red-500 hover:text-white rounded-xl text-xs font-bold transition-all border border-red-500/20 active:scale-95"
+            >
+              Disolver Grupo
+            </button>
+            <button onClick={onClose} className="p-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-text-muted hover:text-white transition-colors">
+              <X size={20} />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto scrollbar-thin p-6 sm:p-8 space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-sm font-black text-white mb-4 flex items-center gap-2">
+                  <Briefcase size={16} className="text-lavender" /> Atributos del Equipo
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-extrabold text-lavender uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                      <FolderKanban size={13} /> Espacio Vinculado
+                    </label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={wsName}
+                      className="input-base py-2 font-bold text-emerald-400 bg-[#101018] cursor-not-allowed opacity-70"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-extrabold text-lavender uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                      <Clock size={13} /> Sprint Actual
+                    </label>
+                    <input
+                      type="text"
+                      value={team.sprint || ''}
+                      onChange={(e) => handleUpdateField('sprint', e.target.value)}
+                      className="input-base py-2 bg-[#101018]"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-extrabold text-lavender uppercase tracking-wider mb-1.5 flex items-center gap-1">
+                      <Sparkles size={13} /> Velocidad (Pts)
+                    </label>
+                    <input
+                      type="number"
+                      value={team.velocity || ''}
+                      onChange={(e) => handleUpdateField('velocity', e.target.value)}
+                      className="input-base py-2 bg-[#101018]"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-[#101018] rounded-2xl p-5 border border-white/5 flex flex-col">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-black text-white flex items-center gap-2">
+                  <Users size={16} className="text-lavender" /> 
+                  Integrantes ({membersList.length})
+                </h3>
+              </div>
+              
+              <div className="flex-1 overflow-y-auto space-y-2 mb-4 max-h-48 pr-2 scrollbar-thin">
+                {membersList.length === 0 && <p className="text-xs text-text-muted italic text-center py-4">No hay integrantes.</p>}
+                {membersList.map((m, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10 transition-colors group">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-lavender to-emerald-400 flex items-center justify-center text-white text-[10px] font-black shadow-sm">
+                        {m.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}
+                      </div>
+                      <span className="text-xs font-bold text-white">{m.name}</span>
+                    </div>
+                    <button 
+                      onClick={() => handleRemoveMember(m.id)}
+                      className="p-1.5 text-text-muted hover:text-red-400 hover:bg-red-400/10 rounded-lg transition-colors opacity-0 group-hover:opacity-100"
+                      title="Expulsar del grupo"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <form onSubmit={handleAddMember} className="mt-auto relative">
+                <input
+                  type="text"
+                  placeholder="Invita a un miembro..."
+                  value={newMemberName}
+                  onChange={(e) => setNewMemberName(e.target.value)}
+                  className="w-full bg-[#141420] border border-white/10 text-white text-xs py-3 pl-4 pr-12 rounded-xl focus:outline-none focus:border-lavender/50 transition-colors placeholder:text-text-muted font-medium"
+                />
+                <button 
+                  type="submit"
+                  disabled={!newMemberName.trim()}
+                  className="absolute right-1.5 top-1.5 bottom-1.5 w-8 flex items-center justify-center bg-lavender hover:bg-lavender-hover disabled:bg-white/5 disabled:text-text-muted text-white rounded-lg transition-colors"
+                >
+                  <Plus size={14} strokeWidth={3} />
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-white/5">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-sm font-black text-white flex items-center gap-2">
+                <CheckCircle size={16} className="text-emerald-400" /> Tareas Relacionadas
+              </h3>
+              <button 
+                onClick={() => { onClose(); navigate('/') }}
+                className="text-xs text-lavender hover:text-lavender-hover font-bold flex items-center gap-1"
+              >
+                Ver en Tablero <ExternalLink size={12} />
+              </button>
+            </div>
+            
+            {teamTasks.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {teamTasks.map(t => (
+                  <div key={t.id} className="p-3 bg-[#101018] rounded-xl border border-white/5 hover:border-lavender/30 transition-colors flex flex-col gap-2 cursor-pointer" onClick={() => { onClose(); navigate('/') }}>
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-[10px] font-black text-lavender bg-lavender/10 px-2 py-0.5 rounded-md truncate max-w-[100px]">{t.id}</span>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                        t.priority === 'Alta' ? 'bg-red-500/10 text-red-400' :
+                        t.priority === 'Media' ? 'bg-yellow-500/10 text-yellow-400' :
+                        'bg-blue-500/10 text-blue-400'
+                      }`}>
+                        {t.priority}
+                      </span>
+                    </div>
+                    <p className="text-xs font-bold text-white line-clamp-2">{t.title}</p>
+                    <div className="mt-auto flex items-center justify-between">
+                      <span className="text-[10px] text-text-secondary font-medium truncate max-w-[120px]">
+                        Asignado: <span className="text-emerald-400">{t.assignee || 'Sin asignar'}</span>
+                      </span>
+                      <span className="text-[10px] text-text-muted bg-white/5 px-1.5 py-0.5 rounded">
+                        {t.status}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 bg-[#101018] rounded-2xl border border-dashed border-white/10">
+                <AlertCircle size={24} className="mx-auto text-text-muted mb-2" />
+                <p className="text-xs text-text-secondary font-medium">No hay tareas vinculadas al Espacio o a los miembros de este grupo.</p>
+              </div>
+            )}
+          </div>
+
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function TeamCard({ team, onOpenDetails, onDeleteTeam, workspaces }) {
   const wsName = workspaces.find(ws => ws.id === team.workspace_id)?.name || 'Espacio General'
   return (
