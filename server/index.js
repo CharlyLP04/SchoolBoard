@@ -1185,6 +1185,96 @@ app.post('/api/admin/reset-database', authenticateToken, async (req, res) => {
   }
 })
 
+// GET /api/colleagues — Get all unique members across user's workspaces
+app.get('/api/colleagues', authenticateToken, async (req, res) => {
+  try {
+    const db = await getDbConnection()
+    const colleagues = await db.all(`
+      SELECT DISTINCT u.id, u.name, u.email, u.role
+      FROM users u
+      JOIN workspace_members wm ON u.id = wm.user_id
+      WHERE wm.workspace_id IN (
+        SELECT workspace_id FROM workspace_members WHERE user_id = ?
+      )
+      ORDER BY u.name ASC
+    `, [req.user.id])
+    await db.close()
+    res.json(colleagues)
+  } catch (error) {
+    console.error('Error fetching colleagues:', error)
+    res.status(500).json({ error: 'Error al obtener compañeros.' })
+  }
+})
+
+// GET /api/teams — Get all teams in user's workspaces
+app.get('/api/teams', authenticateToken, async (req, res) => {
+  try {
+    const db = await getDbConnection()
+    const teams = await db.all(`
+      SELECT t.* 
+      FROM teams t
+      JOIN workspace_members wm ON t.workspace_id = wm.workspace_id
+      WHERE wm.user_id = ?
+      ORDER BY t.created_at DESC
+    `, [req.user.id])
+    
+    const enriched = []
+    for (const team of teams) {
+      const members = await db.all(`
+        SELECT u.id, u.name, u.email 
+        FROM users u
+        JOIN team_members tm ON u.id = tm.user_id
+        WHERE tm.team_id = ?
+      `, [team.id])
+      enriched.push({ ...team, members })
+    }
+    await db.close()
+    res.json(enriched)
+  } catch (error) {
+    console.error('Error fetching teams:', error)
+    res.status(500).json({ error: 'Error al obtener grupos de trabajo.' })
+  }
+})
+
+// POST /api/teams — Create a team
+app.post('/api/teams', authenticateToken, async (req, res) => {
+  const { name, workspace_id, sprint, velocity, member_ids } = req.body
+  if (!name || !workspace_id) return res.status(400).json({ error: 'Nombre y espacio de trabajo son requeridos.' })
+
+  try {
+    const db = await getDbConnection()
+    const now = new Date().toISOString()
+    const result = await db.run(
+      'INSERT INTO teams (workspace_id, name, sprint, velocity, created_at) VALUES (?, ?, ?, ?, ?)',
+      [workspace_id, name.trim(), sprint || '', velocity || 40, now]
+    )
+
+    if (member_ids && member_ids.length > 0) {
+      for (const uid of member_ids) {
+        await db.run('INSERT INTO team_members (team_id, user_id) VALUES (?, ?)', [result.lastID, uid])
+      }
+    }
+    
+    await db.close()
+    res.status(201).json({ success: true, teamId: result.lastID })
+  } catch (error) {
+    console.error('Error creating team:', error)
+    res.status(500).json({ error: 'Error al crear el grupo de trabajo.' })
+  }
+})
+
+// DELETE /api/teams/:id — Delete a team
+app.delete('/api/teams/:id', authenticateToken, async (req, res) => {
+  try {
+    const db = await getDbConnection()
+    await db.run('DELETE FROM teams WHERE id = ?', [req.params.id])
+    await db.close()
+    res.json({ success: true })
+  } catch (error) {
+    res.status(500).json({ error: 'Error al eliminar el grupo.' })
+  }
+})
+
 // Start server
 app.listen(PORT, () => {
   console.log(`SchoolBoard Backend server running at http://localhost:${PORT}`)

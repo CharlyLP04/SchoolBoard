@@ -29,30 +29,10 @@ export function TaskProvider({ children }) {
     } catch (e) { return [] }
   })
 
-  const [teams, setTeams] = useState(() => {
-    try {
-      localStorage.removeItem('schoolboard_custom_teams')
-      const saved = localStorage.getItem('schoolboard_v3_clean_teams')
-      return saved ? JSON.parse(saved) : []
-    } catch (e) {
-      return []
-    }
-  })
-  
-  const [teamMembers, setTeamMembers] = useState(() => {
-    try {
-      localStorage.removeItem('schoolboard_team_members')
-      const saved = localStorage.getItem('schoolboard_v3_clean_members')
-      if (saved) return JSON.parse(saved)
-      return [
-        { id: 'm1', name: user?.name || 'Administrador', role: 'Líder de Proyecto', email: user?.email || 'admin@escuela.com' }
-      ]
-    } catch (e) {
-      return [{ id: 'm1', name: 'Administrador', role: 'Líder de Proyecto', email: 'admin@escuela.com' }]
-    }
-  })
+  const [teams, setTeams] = useState([])
+  const [teamMembers, setTeamMembers] = useState([])
 
-  // Sincronizar absolutamente todo al almacenamiento persistente en cada cambio
+  // Sincronizar tareas y espacios
   useEffect(() => {
     try { localStorage.setItem('schoolboard_v3_clean_tasks', JSON.stringify(columns)) } catch (e) {}
   }, [columns])
@@ -60,14 +40,6 @@ export function TaskProvider({ children }) {
   useEffect(() => {
     try { localStorage.setItem('schoolboard_v3_clean_workspaces', JSON.stringify(workspaces)) } catch (e) {}
   }, [workspaces])
-
-  useEffect(() => {
-    try { localStorage.setItem('schoolboard_v3_clean_teams', JSON.stringify(teams)) } catch (e) {}
-  }, [teams])
-
-  useEffect(() => {
-    try { localStorage.setItem('schoolboard_v3_clean_members', JSON.stringify(teamMembers)) } catch (e) {}
-  }, [teamMembers])
 
   // Obtener Actividades del backend (protegiendo el trabajo del usuario si el servidor gratuito se reinició)
   const fetchTasks = useCallback(async () => {
@@ -133,12 +105,41 @@ export function TaskProvider({ children }) {
     if (localWp.length > 0) setWorkspaces(localWp)
   }, [token])
 
+  // Obtener Grupos y Compañeros del backend
+  const fetchTeams = useCallback(async () => {
+    if (!token) return
+    try {
+      const res = await fetch('https://schoolboard-server.onrender.com/api/teams', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setTeams(data)
+      }
+    } catch (e) {}
+  }, [token])
+
+  const fetchColleagues = useCallback(async () => {
+    if (!token) return
+    try {
+      const res = await fetch('https://schoolboard-server.onrender.com/api/colleagues', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setTeamMembers(data)
+      }
+    } catch (e) {}
+  }, [token])
+
   useEffect(() => {
     if (token) {
       fetchTasks()
       fetchWorkspaces()
+      fetchTeams()
+      fetchColleagues()
     }
-  }, [token, fetchTasks, fetchWorkspaces])
+  }, [token, fetchTasks, fetchWorkspaces, fetchTeams, fetchColleagues])
 
   // Todas las tareas planas (sin importar la columna)
   const allTasks = useMemo(() => {
@@ -520,32 +521,81 @@ export function TaskProvider({ children }) {
 
 
 
-  const addTeamMember = useCallback((memberData) => {
-    const newMember = { ...memberData, id: Date.now().toString() }
-    setTeamMembers(prev => [...prev, newMember])
-    toast.success(`Compañero ${newMember.name} agregado al equipo.`, 3000)
-  }, [toast])
+  const addTeamMember = useCallback(async (workspaceId, email) => {
+    try {
+      const res = await fetch(`https://schoolboard-server.onrender.com/api/workspaces/${workspaceId}/invite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ email: email.trim() })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(data.message, 3000)
+        fetchColleagues()
+        return true
+      } else {
+        toast.error(data.error || 'Error al invitar compañero.')
+        return false
+      }
+    } catch (e) {
+      toast.error('Error de conexión.')
+      return false
+    }
+  }, [token, fetchColleagues, toast])
 
   const removeTeamMember = useCallback((memberName) => {
-    setTeamMembers(prev => prev.filter(m => m.name !== memberName))
-    toast.info(`Compañero eliminado del equipo.`, 3000)
+    toast.info('Para remover a un miembro, ve a los ajustes de tu Espacio.', 4000)
   }, [toast])
 
-  const addTeam = useCallback((teamData) => {
-    const newTeam = { ...teamData, id: Date.now().toString() }
-    setTeams(prev => [...prev, newTeam])
-    toast.success(`Grupo de trabajo "${newTeam.name}" formado con éxito.`, 3000)
-  }, [toast])
+  const addTeam = useCallback(async (teamData) => {
+    try {
+      const res = await fetch('https://schoolboard-server.onrender.com/api/teams', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: teamData.name,
+          workspace_id: teamData.workspace_id,
+          sprint: teamData.sprint,
+          velocity: teamData.velocity,
+          member_ids: teamData.member_ids
+        })
+      })
+      if (res.ok) {
+        toast.success(`Grupo de trabajo "${teamData.name}" formado con éxito.`, 3000)
+        fetchTeams()
+      } else {
+        toast.error('Error al crear el grupo.')
+      }
+    } catch (e) {
+      toast.error('Error de conexión.')
+    }
+  }, [token, fetchTeams, toast])
 
   const updateTeam = useCallback((updatedTeam) => {
-    setTeams(prev => prev.map(t => t.id === updatedTeam.id ? updatedTeam : t))
-    toast.success(`Grupo "${updatedTeam.name}" actualizado.`, 2000)
+    // Falta endpoint, por ahora solo mostramos mensaje
+    toast.info(`La actualización de grupos estará disponible pronto.`, 2000)
   }, [toast])
 
-  const deleteTeam = useCallback((teamId) => {
-    setTeams(prev => prev.filter(t => t.id !== teamId))
-    toast.info('Grupo de trabajo disuelto.', 3000)
-  }, [toast])
+  const deleteTeam = useCallback(async (teamId) => {
+    try {
+      const res = await fetch(`https://schoolboard-server.onrender.com/api/teams/${teamId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (res.ok) {
+        toast.info('Grupo de trabajo disuelto.', 3000)
+        fetchTeams()
+      }
+    } catch (e) {
+      toast.error('Error al eliminar grupo.')
+    }
+  }, [token, fetchTeams, toast])
 
   const value = useMemo(() => ({
     columns,

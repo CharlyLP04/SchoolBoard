@@ -118,6 +118,31 @@ export async function initializeDb() {
     )
   `)
 
+  // Create Teams Table
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS teams (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      workspace_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      sprint TEXT,
+      velocity INTEGER,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (workspace_id) REFERENCES workspaces (id) ON DELETE CASCADE
+    )
+  `)
+
+  // Create Team Members Table
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS team_members (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      team_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      FOREIGN KEY (team_id) REFERENCES teams (id) ON DELETE CASCADE,
+      FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+      UNIQUE(team_id, user_id)
+    )
+  `)
+
   // Create Lists Table (HU-19, HU-20)
   await db.exec(`
     CREATE TABLE IF NOT EXISTS lists (
