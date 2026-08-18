@@ -248,7 +248,7 @@ export function TaskProvider({ children }) {
     } else if (targetStatus === 'revision') {
       const evs = payload.evidences || currentTask?.evidences || []
       if (evs.length === 0) {
-        toast.warning('⚠️ Regla de negocio: Actividad cambiada a "En revisión" sin enlace de evidencia adjunto.', 4500)
+        toast.info('⚠️ Regla de negocio: Actividad cambiada a "En revisión" sin enlace de evidencia adjunto.', 4500, '⚠️ Atención')
       }
     }
 
