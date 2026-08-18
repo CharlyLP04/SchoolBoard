@@ -521,7 +521,40 @@ export function TaskProvider({ children }) {
 
 
 
-  const addTeamMember = useCallback(async (workspaceId, email) => {
+  
+  const [epics, setEpics] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('schoolboard_v3_clean_epics') || '[]')
+    } catch {
+      return []
+    }
+  })
+
+  const addEpic = useCallback((newEpic) => {
+    setEpics(prev => {
+      const updated = [...prev, { ...newEpic, id: 'EPIC-' + Math.random().toString(36).substr(2, 5).toUpperCase(), progress: 0, items: [] }]
+      localStorage.setItem('schoolboard_v3_clean_epics', JSON.stringify(updated))
+      return updated
+    })
+  }, [])
+
+  const updateEpic = useCallback((epicId, updater) => {
+    setEpics(prev => {
+      const updated = prev.map(ep => ep.id === epicId ? { ...ep, ...updater(ep) } : ep)
+      localStorage.setItem('schoolboard_v3_clean_epics', JSON.stringify(updated))
+      return updated
+    })
+  }, [])
+
+  const deleteEpic = useCallback((epicId) => {
+    setEpics(prev => {
+      const updated = prev.filter(ep => ep.id !== epicId)
+      localStorage.setItem('schoolboard_v3_clean_epics', JSON.stringify(updated))
+      return updated
+    })
+  }, [])
+
+const addTeamMember = useCallback(async (workspaceId, email) => {
     try {
       const res = await fetch(`https://schoolboard-server.onrender.com/api/workspaces/${workspaceId}/invite`, {
         method: 'POST',
@@ -598,6 +631,10 @@ export function TaskProvider({ children }) {
   }, [token, fetchTeams, toast])
 
   const value = useMemo(() => ({
+    epics,
+    addEpic,
+    updateEpic,
+    deleteEpic,
     epics,
     addEpic,
     updateEpic,
