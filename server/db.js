@@ -164,6 +164,18 @@ export async function initializeDb() {
     )
   `)
 
+  // Create Registration Verifications Table
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS registration_verifications (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      email TEXT UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      code TEXT NOT NULL,
+      expires_at TEXT NOT NULL
+    )
+  `)
+
   // Seed Admin User if not exists
   const adminUser = await db.get('SELECT * FROM users WHERE email = ?', ['admin@schoolboard.com'])
   if (!adminUser) {

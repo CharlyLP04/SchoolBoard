@@ -51,26 +51,43 @@ export function AuthProvider({ children }) {
     setUser(null)
   }
 
-  // Registro de usuario (HU-15)
-  async function register({ name, email, password }) {
+  // Solicitar código de registro
+  async function requestRegistrationCode({ name, email, password }) {
+    try {
+      const res = await fetch('https://schoolboard-server.onrender.com/api/auth/register-send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'No se pudo enviar el código de verificación')
+      return data
+    } catch (error) {
+      console.error('Error requesting code:', error)
+      throw error
+    }
+  }
+
+  // Confirmar registro con el código
+  async function register({ email, code }) {
     try {
       const res = await fetch('https://schoolboard-server.onrender.com/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password }),
+        body: JSON.stringify({ email, code }),
       })
 
       const data = await res.json()
 
       if (!res.ok) {
-        throw new Error(data.error || 'No se pudo completar el registro')
+        throw new Error(data.error || 'Código incorrecto o expirado')
       }
 
       sessionStorage.setItem(SESSION_KEY, JSON.stringify(data))
       setUser(data)
       return data
     } catch (error) {
-      console.error('Error during registration:', error)
+      console.error('Error during registration verification:', error)
       throw error
     }
   }
@@ -132,6 +149,7 @@ export function AuthProvider({ children }) {
     isLoading,
     login,
     logout,
+    requestRegistrationCode,
     register,
     forgotPassword,
     resetPassword,

@@ -64,8 +64,8 @@ async function logActivity(text, user = 'System') {
 
 // --- AUTH ROUTES ---
 
-// POST /api/auth/register
-app.post('/api/auth/register', async (req, res) => {
+// POST /api/auth/register-send-code
+app.post('/api/auth/register-send-code', async (req, res) => {
   const { name, email, password } = req.body
 
   if (!name || !email || !password) {
@@ -86,11 +86,82 @@ app.post('/api/auth/register', async (req, res) => {
 
     const salt = bcrypt.genSaltSync(10)
     const hash = bcrypt.hashSync(password, salt)
+    
+    // Generate 6 digit code
+    const code = Math.floor(100000 + Math.random() * 900000).toString()
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000).toISOString() // 15 min
 
+    // Upsert the verification code
+    await db.run('DELETE FROM registration_verifications WHERE email = ?', [email])
+    await db.run(
+      'INSERT INTO registration_verifications (name, email, password_hash, code, expires_at) VALUES (?, ?, ?, ?, ?)',
+      [name, email, hash, code, expiresAt]
+    )
+    
+    await db.close()
+
+    const mailOptions = {
+      from: '"SchoolBoard" <pruebasschool6@gmail.com>',
+      to: email,
+      subject: 'Tu código de verificación - SchoolBoard',
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; text-align: center;">
+          <h2 style="color: #7c3aed;">Código de Verificación</h2>
+          <p>Hola ${name}, usa el siguiente código para completar tu registro:</p>
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0;">
+            <h1 style="letter-spacing: 5px; color: #111; margin: 0;">${code}</h1>
+          </div>
+          <p style="color: #666; font-size: 14px;">Este código expira en 15 minutos.</p>
+        </div>
+      `
+    }
+    
+    transporter.sendMail(mailOptions).catch(err => console.error('Error sending verification email:', err))
+
+    res.json({ success: true, message: 'Se ha enviado un código de verificación a tu correo.' })
+  } catch (error) {
+    console.error('Error during send code:', error)
+    res.status(500).json({ error: 'Error interno del servidor.' })
+  }
+})
+
+// POST /api/auth/register (Verifies code and creates account)
+app.post('/api/auth/register', async (req, res) => {
+  const { email, code } = req.body
+
+  if (!email || !code) {
+    return res.status(400).json({ error: 'Correo y código son requeridos.' })
+  }
+
+  try {
+    const db = await getDbConnection()
+
+    const verification = await db.get('SELECT * FROM registration_verifications WHERE email = ?', [email])
+    
+    if (!verification) {
+      await db.close()
+      return res.status(400).json({ error: 'No hay un registro pendiente para este correo.' })
+    }
+
+    if (verification.code !== code) {
+      await db.close()
+      return res.status(400).json({ error: 'El código de verificación es incorrecto.' })
+    }
+
+    if (new Date(verification.expires_at) < new Date()) {
+      await db.close()
+      return res.status(400).json({ error: 'El código de verificación ha expirado.' })
+    }
+
+    // Insert user
     const result = await db.run(
       'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
-      [name, email, hash, 'member']
+      [verification.name, verification.email, verification.password_hash, 'member']
     )
+    
+    // Clean up verification table
+    await db.run('DELETE FROM registration_verifications WHERE email = ?', [email])
+    
     const newUser = await db.get('SELECT * FROM users WHERE id = ?', [result.lastID])
     await db.close()
 
@@ -118,7 +189,6 @@ app.post('/api/auth/register', async (req, res) => {
       `
     }
     
-    // Send welcome email asynchronously
     transporter.sendMail(mailOptions).catch(err => console.error('Error sending welcome email:', err))
 
     res.status(201).json({
@@ -131,7 +201,7 @@ app.post('/api/auth/register', async (req, res) => {
       }
     })
   } catch (error) {
-    console.error('Error during registration:', error)
+    console.error('Error during registration verify:', error)
     res.status(500).json({ error: 'Error interno del servidor.' })
   }
 })
