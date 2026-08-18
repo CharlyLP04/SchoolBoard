@@ -11,6 +11,7 @@ import NuevaActividad from './pages/NuevaActividad.jsx'
 import DetalleActividad from './pages/DetalleActividad.jsx'
 import EspaciosTrabajo from './pages/EspaciosTrabajo.jsx'
 import EspacioDetalle from './pages/EspacioDetalle.jsx'
+import Equipos from './pages/Equipos.jsx'
 import NotFound from './pages/NotFound.jsx'
 
 export default function App() {
@@ -29,6 +30,7 @@ export default function App() {
           <Route path="/actividad/:id" element={<DetalleActividad />} />
           <Route path="/espacios" element={<EspaciosTrabajo />} />
           <Route path="/espacios/:id" element={<EspacioDetalle />} />
+          <Route path="/equipos" element={<Equipos />} />
         </Route>
       </Route>
 
