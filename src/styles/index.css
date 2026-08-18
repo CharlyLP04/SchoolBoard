@@ -153,6 +153,11 @@
     border-color: var(--color-border) !important;
   }
 
+  /* FIX: Prevenir fallback a blanco cuando se usan opacidades inválidas de Tailwind como border-border/80 */
+  [class*="border-border\/"] {
+    border-color: var(--color-border) !important;
+  }
+
   /* Overlays / modales backdrop */
   html.light [class~="bg-black\/75"],
   html.light [class~="bg-black\/80"],

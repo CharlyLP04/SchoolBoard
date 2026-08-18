@@ -375,7 +375,7 @@ export default function Navbar() {
             {/* Botón Crear Actividad Premium */}
             <button 
               onClick={() => navigate('/actividad/nueva')}
-              className="hidden sm:flex items-center gap-2 bg-gradient-to-r from-lavender to-lavender-hover text-white text-xs font-black px-4.5 py-2.5 rounded-xl transition-all duration-200 shadow-md shadow-lavender/25 hover:shadow-lg hover:shadow-lavender/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 select-none"
+              className="hidden sm:flex items-center gap-1.5 bg-gradient-to-r from-lavender to-lavender-hover text-white text-xs font-black px-4.5 py-2.5 rounded-xl transition-all duration-200 shadow-md shadow-lavender/25 hover:shadow-lg hover:shadow-lavender/40 hover:-translate-y-0.5 active:translate-y-0 active:scale-95 select-none"
             >
               <Plus size={16} strokeWidth={3} />
               Crear actividad

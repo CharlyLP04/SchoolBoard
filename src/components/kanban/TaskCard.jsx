@@ -41,14 +41,14 @@ function TaskCard({ task, draggable, onDragStart, onClick }) {
               e.stopPropagation()
               navigate(`/actividad/${task.id}`)
             }}
-            className="p-1.5 rounded-lg bg-bg-card hover:bg-lavender/20 border border-border/80 text-text-secondary hover:text-lavender transition-all shadow-md active:scale-90"
+            className="p-1.5 rounded-lg bg-bg-card hover:bg-lavender/20 border border-border text-text-secondary hover:text-lavender transition-all shadow-md active:scale-90"
             title="Ver detalle completo"
           >
             <ExternalLink size={12} />
           </button>
           <button
             onClick={handleDeleteClick}
-            className="p-1.5 rounded-lg bg-bg-card hover:bg-priority-high/20 border border-border/80 text-text-secondary hover:text-priority-high transition-all shadow-md active:scale-90"
+            className="p-1.5 rounded-lg bg-bg-card hover:bg-priority-high/20 border border-border text-text-secondary hover:text-priority-high transition-all shadow-md active:scale-90"
             title="Eliminar actividad"
           >
             <Trash2 size={12} />
