@@ -566,6 +566,26 @@ const addTeamMember = useCallback(async (workspaceId, email) => {
       })
       const data = await res.json()
       if (res.ok) {
+        if (data && data.devInviteUrl) {
+          try {
+            await fetch('/api/mailer', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: email.trim(),
+                subject: 'Invitación a Espacio de Trabajo - SchoolBoard',
+                html: `
+                  <h3>Hola ${data.invitedUserName},</h3>
+                  <p>¡Has sido invitado al espacio de trabajo <strong>${data.workspaceName}</strong> por ${data.inviterName}!</p>
+                  <p>Puedes acceder al espacio de trabajo haciendo clic en el siguiente enlace:</p>
+                  <a href="${data.devInviteUrl}">Ir al Espacio de Trabajo</a>
+                `
+              })
+            })
+          } catch (e) {
+            console.error('Error enviando email Vercel API:', e)
+          }
+        }
         toast.success(data.message, 3000)
         fetchColleagues()
         return true
