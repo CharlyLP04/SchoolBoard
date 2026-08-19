@@ -3,11 +3,34 @@ import cors from 'cors'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
-import nodemailer from 'nodemailer'
+
 import { fileURLToPath } from 'url'
 import { getDbConnection, initializeDb } from './db.js'
 
-const RESEND_API_KEY = 're_iFBkWMmu_NthW2XmwWxMmx5GwVWANvYpS'
+const BREVO_API_KEY = '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'
+const BREVO_SENDER = { name: 'SchoolBoard', email: 'pruebasschool6@gmail.com' }
+
+async function sendEmailBrevo(to, subject, htmlContent) {
+  const res = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'accept': 'application/json',
+      'api-key': BREVO_API_KEY,
+      'content-type': 'application/json'
+    },
+    body: JSON.stringify({
+      sender: BREVO_SENDER,
+      to: [{ email: to }],
+      subject,
+      htmlContent
+    })
+  })
+  if (!res.ok) {
+    const err = await res.json()
+    throw new Error(err.message || 'Error de Brevo')
+  }
+  return await res.json()
+}
 
 
 const app = express()
@@ -96,15 +119,22 @@ app.post('/api/auth/register-send-code', async (req, res) => {
     await db.close()
 
     try {
-      
-      // Email sent via frontend
-
+      await sendEmailBrevo(email, 'Tu código de verificación - SchoolBoard', `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; text-align: center;">
+          <h2 style="color: #7c3aed;">Código de Verificación</h2>
+          <p>Hola ${name}, usa el siguiente código para completar tu registro:</p>
+          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0;">
+            <h1 style="letter-spacing: 5px; color: #111; margin: 0;">${code}</h1>
+          </div>
+          <p style="color: #666; font-size: 14px;">Este código expira en 15 minutos.</p>
+        </div>
+      `)
     } catch (emailError) {
-      console.error('Resend Error:', emailError)
+      console.error('Brevo Error:', emailError)
       return res.status(500).json({ error: 'Error del servidor de correos: ' + emailError.message })
     }
 
-    res.json({ success: true, message: 'Se ha generado el código.', devCode: code, userName: name })
+    res.json({ success: true, message: 'Se ha enviado un código de verificación a tu correo.' })
   } catch (error) {
     console.error('Error during send code:', error)
     res.status(500).json({ error: 'Error interno del servidor.' })
@@ -270,24 +300,12 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     const clientUrl = req.headers.origin || 'https://school-board-gilt.vercel.app'
     const resetUrl = `${clientUrl}/restablecer-contrasena?token=${token}`
 
-    fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: 'onboarding@resend.dev',
-        to: user.email,
-        subject: 'Recuperación de Contraseña - SchoolBoard',
-        html: `
-          <h3>Hola ${user.name},</h3>
-          <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para crear una nueva:</p>
-          <a href="${resetUrl}">Restablecer mi contraseña</a>
-          <p>Si no solicitaste esto, ignora este correo.</p>
-        `
-      })
-    }).catch(err => console.error('Error sending reset email with Resend:', err))
+    sendEmailBrevo(user.email, 'Recuperación de Contraseña - SchoolBoard', `
+      <h3>Hola ${user.name},</h3>
+      <p>Has solicitado restablecer tu contraseña. Haz clic en el siguiente enlace para crear una nueva:</p>
+      <a href="${resetUrl}">Restablecer mi contraseña</a>
+      <p>Si no solicitaste esto, ignora este correo.</p>
+    `).catch(err => console.error('Error sending reset email with Brevo:', err))
 
     await logActivity(`Solicitud de recuperación de contraseña para "${user.email}"`, user.name)
 
@@ -936,24 +954,12 @@ app.post('/api/workspaces/:id/invite', authenticateToken, async (req, res) => {
     const clientUrl = req.headers.origin || 'https://school-board-gilt.vercel.app'
     const workspaceUrl = `${clientUrl}/espacios/${id}`
 
-    fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: 'onboarding@resend.dev',
-        to: invitedUser.email,
-        subject: 'Invitación a Espacio de Trabajo - SchoolBoard',
-        html: `
-          <h3>Hola ${invitedUser.name},</h3>
-          <p>¡Has sido invitado al espacio de trabajo <strong>${workspace?.name}</strong> por ${req.user.name}!</p>
-          <p>Puedes acceder al espacio de trabajo haciendo clic en el siguiente enlace:</p>
-          <a href="${workspaceUrl}">Ir al Espacio de Trabajo</a>
-        `
-      })
-    }).catch(err => console.error('Error sending invite email with Resend:', err))
+    sendEmailBrevo(invitedUser.email, 'Invitación a Espacio de Trabajo - SchoolBoard', `
+      <h3>Hola ${invitedUser.name},</h3>
+      <p>¡Has sido invitado al espacio de trabajo <strong>${workspace?.name}</strong> por ${req.user.name}!</p>
+      <p>Puedes acceder al espacio de trabajo haciendo clic en el siguiente enlace:</p>
+      <a href="${workspaceUrl}">Ir al Espacio de Trabajo</a>
+    `).catch(err => console.error('Error sending invite email with Brevo:', err))
 
     await logActivity(`${invitedUser.name} fue invitado al espacio "${workspace?.name}" por ${req.user.name}`, req.user.name)
 

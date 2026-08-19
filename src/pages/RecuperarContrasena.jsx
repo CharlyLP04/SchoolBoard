@@ -25,9 +25,6 @@ export default function RecuperarContrasena() {
     setIsSubmitting(true)
     try {
       const data = await forgotPassword({ email: email.trim() })
-      if (data && data.devResetUrl) {
-        alert(`AVISO (Resend Free Tier): No pudimos enviarte el correo. Este es el enlace de recuperación auto-generado: \n\n${data.devResetUrl}`)
-      }
       setResult(data)
     } catch (err) {
       setError(err.message || 'Error al solicitar la recuperación')
