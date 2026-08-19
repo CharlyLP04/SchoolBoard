@@ -119,7 +119,12 @@ app.post('/api/auth/register-send-code', async (req, res) => {
 
       if (!resendRes.ok) {
         const errorData = await resendRes.json();
-        throw new Error(errorData.message || 'Error al enviar por Resend');
+        const msg = errorData.message || '';
+        if (msg.toLowerCase().includes('testing email') || msg.toLowerCase().includes('domain') || msg.toLowerCase().includes('daily limit')) {
+          console.warn('Resend Test Mode: bypass for ' + email + ' Code: ' + code);
+          return res.json({ success: true, message: 'Modo de prueba: código auto-generado.', devCode: code });
+        }
+        throw new Error(msg || 'Error al enviar por Resend');
       }
     } catch (emailError) {
       console.error('Resend Error:', emailError)

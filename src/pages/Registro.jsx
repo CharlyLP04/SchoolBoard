@@ -63,7 +63,11 @@ export default function Registro() {
 
     setIsSubmitting(true)
     try {
-      await requestRegistrationCode({ name: form.name.trim(), email: form.email.trim(), password: form.password })
+      const data = await requestRegistrationCode({ name: form.name.trim(), email: form.email.trim(), password: form.password })
+      if (data && data.devCode) {
+        setForm((prev) => ({ ...prev, code: data.devCode }))
+        alert(`AVISO (Resend Free Tier): Como no pudimos enviar el correo, tu código auto-generado de prueba es: ${data.devCode}. Lo hemos autocompletado por ti.`)
+      }
       setStep(2)
       setErrors({})
     } catch (err) {
