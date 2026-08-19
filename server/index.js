@@ -97,14 +97,12 @@ app.post('/api/auth/register-send-code', async (req, res) => {
 
     try {
       
-      const resendRes = await fetch('https://api.resend.com/emails', {
+      const origin = req.get('origin') || 'https://school-board-bkrykswtm-charlys-projects-ae36c62e.vercel.app';
+      const mailerUrl = `${origin}/api/mailer`;
+      const mailRes = await fetch(mailerUrl, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          from: 'onboarding@resend.dev',
           to: email,
           subject: 'Tu código de verificación - SchoolBoard',
           html: `
@@ -120,14 +118,8 @@ app.post('/api/auth/register-send-code', async (req, res) => {
         })
       });
 
-      if (!resendRes.ok) {
-        const errorData = await resendRes.json();
-        const msg = errorData.message || '';
-        if (msg.toLowerCase().includes('testing email') || msg.toLowerCase().includes('domain') || msg.toLowerCase().includes('daily limit')) {
-          console.warn('Resend Test Mode: bypass for ' + email + ' Code: ' + code);
-          return res.json({ success: true, message: 'Modo de prueba: código auto-generado.', devCode: code });
-        }
-        throw new Error(msg || 'Error al enviar por Resend');
+      if (!mailRes.ok) {
+        throw new Error('Error al enviar correo por Vercel API');
       }
 
     } catch (emailError) {

@@ -63,11 +63,7 @@ export default function Registro() {
 
     setIsSubmitting(true)
     try {
-      const data = await requestRegistrationCode({ name: form.name.trim(), email: form.email.trim(), password: form.password })
-      if (data && data.devCode) {
-        setForm((prev) => ({ ...prev, code: data.devCode }))
-        alert(`AVISO: Como no tenemos un dominio de pago para enviar correos, tu código auto-generado de prueba es: ${data.devCode}. Lo hemos autocompletado por ti.`)
-      }
+      await requestRegistrationCode({ name: form.name.trim(), email: form.email.trim(), password: form.password })
       setStep(2)
       setErrors({})
     } catch (err) {
