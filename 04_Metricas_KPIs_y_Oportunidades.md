@@ -1,7 +1,7 @@
 # Documento 4 — Métricas, KPIs y Oportunidades de Mejora
 ## SchoolBoard (TaskBoard Académico)
 
-> **Autor**: Dev/BI · **Fecha**: 19 de agosto de 2026
+> **Autor**: Dev
 > **Proyecto**: SchoolBoard — Sistema de Gestión de Actividades Académicas (Equipo 5)
 > **Fuente de verdad**: Código fuente del repositorio `CharlyLP04/SchoolBoard`
 

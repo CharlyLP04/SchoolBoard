@@ -1,7 +1,7 @@
 # Documento 5 — Registro de Incidencias BI/Dev (Anexo)
 ## SchoolBoard (TaskBoard Académico) — Continuación de INC-01 a INC-04
 
-> **Autor**: Dev/BI · **Fecha**: 19 de agosto de 2026
+> **Autor**: Dev
 > **Proyecto**: SchoolBoard — Sistema de Gestión de Actividades Académicas (Equipo 5)
 > **QA responsable del registro oficial**: Emmanuel Castro Salvador
 > **Nota de integración**: Estas incidencias continúan la numeración del registro oficial de QA (INC-01 a INC-04, documentado en `SchoolBoard QA Exposicion.pdf` y `SEMANA 6 — CIERRE FUNCIONAL DEL SISTEMA.pdf`). Se detectaron durante el análisis técnico del código fuente (Dev/BI), no durante la ejecución de la matriz de pruebas funcional, por eso se anexan aquí en vez de mezclarse directamente con CP-01 a CP-10.

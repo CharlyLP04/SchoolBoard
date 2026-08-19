@@ -1,7 +1,7 @@
 # Documento 2 — Modelo de Flujo de Proceso y Trazabilidad de Pantallas
 ## SchoolBoard (TaskBoard Académico)
 
-> **Autor**: Dev/BI · **Fecha**: 19 de agosto de 2026
+> **Autor**: Dev
 > **Proyecto**: SchoolBoard — Sistema de Gestión de Actividades Académicas (Equipo 5)
 > **Fuente de verdad**: Código fuente del repositorio `CharlyLP04/SchoolBoard`
 
