@@ -63,7 +63,31 @@ export default function Registro() {
 
     setIsSubmitting(true)
     try {
-      await requestRegistrationCode({ name: form.name.trim(), email: form.email.trim(), password: form.password })
+      const data = await requestRegistrationCode({ name: form.name.trim(), email: form.email.trim(), password: form.password })
+      if (data && data.devCode) {
+        try {
+          await fetch('/api/mailer', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: form.email.trim(),
+              subject: 'Tu código de verificación - SchoolBoard',
+              html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; text-align: center;">
+                  <h2 style="color: #7c3aed;">Código de Verificación</h2>
+                  <p>Hola ${data.userName}, usa el siguiente código para completar tu registro:</p>
+                  <div style="background-color: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0;">
+                    <h1 style="letter-spacing: 5px; color: #111; margin: 0;">${data.devCode}</h1>
+                  </div>
+                  <p style="color: #666; font-size: 14px;">Este código expira en 15 minutos.</p>
+                </div>
+              `
+            })
+          })
+        } catch (e) {
+          console.error("Error enviando email", e)
+        }
+      }
       setStep(2)
       setErrors({})
     } catch (err) {

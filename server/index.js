@@ -97,37 +97,14 @@ app.post('/api/auth/register-send-code', async (req, res) => {
 
     try {
       
-      const origin = req.get('origin') || 'https://school-board-bkrykswtm-charlys-projects-ae36c62e.vercel.app';
-      const mailerUrl = `${origin}/api/mailer`;
-      const mailRes = await fetch(mailerUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          to: email,
-          subject: 'Tu código de verificación - SchoolBoard',
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; text-align: center;">
-              <h2 style="color: #7c3aed;">Código de Verificación</h2>
-              <p>Hola ${name}, usa el siguiente código para completar tu registro:</p>
-              <div style="background-color: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0;">
-                <h1 style="letter-spacing: 5px; color: #111; margin: 0;">${code}</h1>
-              </div>
-              <p style="color: #666; font-size: 14px;">Este código expira en 15 minutos.</p>
-            </div>
-          `
-        })
-      });
-
-      if (!mailRes.ok) {
-        throw new Error('Error al enviar correo por Vercel API');
-      }
+      // Email sent via frontend
 
     } catch (emailError) {
       console.error('Resend Error:', emailError)
       return res.status(500).json({ error: 'Error del servidor de correos: ' + emailError.message })
     }
 
-    res.json({ success: true, message: 'Se ha enviado un código de verificación a tu correo.' })
+    res.json({ success: true, message: 'Se ha generado el código.', devCode: code, userName: name })
   } catch (error) {
     console.error('Error during send code:', error)
     res.status(500).json({ error: 'Error interno del servidor.' })
