@@ -3,10 +3,21 @@ import cors from 'cors'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
+import nodemailer from 'nodemailer'
 import { fileURLToPath } from 'url'
 import { getDbConnection, initializeDb } from './db.js'
 
 const RESEND_API_KEY = 're_iFBkWMmu_NthW2XmwWxMmx5GwVWANvYpS'
+
+
+// Transporter para enviar correos usando la cuenta que diste
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'pruebasschool6@gmail.com',
+    pass: 'oljclmrgcztfimdt'
+  }
+})
 
 const app = express()
 const PORT = process.env.PORT || 5000
@@ -94,38 +105,24 @@ app.post('/api/auth/register-send-code', async (req, res) => {
     await db.close()
 
     try {
-      const resendRes = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          from: 'onboarding@resend.dev',
-          to: email,
-          subject: 'Tu código de verificación - SchoolBoard',
-          html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; text-align: center;">
-              <h2 style="color: #7c3aed;">Código de Verificación</h2>
-              <p>Hola ${name}, usa el siguiente código para completar tu registro:</p>
-              <div style="background-color: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0;">
-                <h1 style="letter-spacing: 5px; color: #111; margin: 0;">${code}</h1>
-              </div>
-              <p style="color: #666; font-size: 14px;">Este código expira en 15 minutos.</p>
+      
+      const mailOptions = {
+        from: '"SchoolBoard" <pruebasschool6@gmail.com>',
+        to: email,
+        subject: 'Tu código de verificación - SchoolBoard',
+        html: `
+          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; text-align: center;">
+            <h2 style="color: #7c3aed;">Código de Verificación</h2>
+            <p>Hola ${name}, usa el siguiente código para completar tu registro:</p>
+            <div style="background-color: #f3f4f6; padding: 20px; border-radius: 12px; margin: 20px 0;">
+              <h1 style="letter-spacing: 5px; color: #111; margin: 0;">${code}</h1>
             </div>
-          `
-        })
-      });
+            <p style="color: #666; font-size: 14px;">Este código expira en 15 minutos.</p>
+          </div>
+        `
+      };
+      await transporter.sendMail(mailOptions);
 
-      if (!resendRes.ok) {
-        const errorData = await resendRes.json();
-        const msg = errorData.message || '';
-        if (msg.toLowerCase().includes('testing email') || msg.toLowerCase().includes('domain') || msg.toLowerCase().includes('daily limit')) {
-          console.warn('Resend Test Mode: bypass for ' + email + ' Code: ' + code);
-          return res.json({ success: true, message: 'Modo de prueba: código auto-generado.', devCode: code });
-        }
-        throw new Error(msg || 'Error al enviar por Resend');
-      }
     } catch (emailError) {
       console.error('Resend Error:', emailError)
       return res.status(500).json({ error: 'Error del servidor de correos: ' + emailError.message })
