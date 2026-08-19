@@ -189,29 +189,17 @@ app.post('/api/auth/register', async (req, res) => {
 
     await logActivity(`Nueva cuenta registrada: "${newUser.name}"`, newUser.name)
 
-    // Enviar correo de bienvenida con Resend
-    fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${RESEND_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        from: 'onboarding@resend.dev',
-        to: newUser.email,
-        subject: '¡Bienvenido a SchoolBoard! 🚀',
-        html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #7c3aed;">¡Hola ${newUser.name}! 👋</h2>
-            <p>Tu cuenta en <strong>SchoolBoard</strong> ha sido creada exitosamente.</p>
-            <p>Ya puedes empezar a gestionar tus proyectos escolares de forma ágil y colaborativa junto con tu equipo.</p>
-            <br>
-            <p>¡Mucho éxito en tus proyectos!</p>
-            <p style="color: #666; font-size: 12px;">El equipo de SchoolBoard</p>
-          </div>
-        `
-      })
-    }).catch(err => console.error('Error sending welcome email with Resend:', err))
+    // Enviar correo de bienvenida con Brevo
+    sendEmailBrevo(newUser.email, '¡Bienvenido a SchoolBoard! 🚀', `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #7c3aed;">¡Hola ${newUser.name}! 👋</h2>
+        <p>Tu cuenta en <strong>SchoolBoard</strong> ha sido creada exitosamente.</p>
+        <p>Ya puedes empezar a gestionar tus proyectos escolares de forma ágil y colaborativa junto con tu equipo.</p>
+        <br>
+        <p>¡Mucho éxito en tus proyectos!</p>
+        <p style="color: #666; font-size: 12px;">El equipo de SchoolBoard</p>
+      </div>
+    `).catch(err => console.error('Error sending welcome email with Brevo:', err))
 
     res.status(201).json({
       token,
