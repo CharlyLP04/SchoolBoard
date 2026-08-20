@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import pg from 'pg'
 import sqlite3 from 'sqlite3'
 import { open } from 'sqlite'
@@ -9,8 +10,7 @@ const { Pool } = pg
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-export const DEFAULT_DATABASE_URL = process.env.DATABASE_URL || 
-  'postgresql://neondb_owner:npg_Pum9dQvSprM7@ep-autumn-shadow-ay5kws1z-pooler.c-5.us-east-2.aws.neon.tech/neondb?sslmode=require'
+export const DEFAULT_DATABASE_URL = process.env.DATABASE_URL || ''
 
 const dbPath = path.resolve(__dirname, 'schoolboard.db')
 

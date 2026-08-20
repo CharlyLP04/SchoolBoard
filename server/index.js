@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import express from 'express'
 import cors from 'cors'
 import jwt from 'jsonwebtoken'
@@ -7,8 +8,11 @@ import crypto from 'crypto'
 import { fileURLToPath } from 'url'
 import { getDbConnection, initializeDb } from './db.js'
 
-const BREVO_API_KEY = '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'
-const BREVO_SENDER = { name: 'SchoolBoard', email: 'pruebasschool6@gmail.com' }
+const BREVO_API_KEY = process.env.BREVO_API_KEY || ''
+const BREVO_SENDER = {
+  name: process.env.BREVO_SENDER_NAME || 'SchoolBoard',
+  email: process.env.BREVO_SENDER_EMAIL || 'pruebasschool6@gmail.com'
+}
 
 async function sendEmailBrevo(to, subject, htmlContent) {
   const res = await fetch('https://api.brevo.com/v3/smtp/email', {
