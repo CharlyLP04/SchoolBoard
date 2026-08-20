@@ -22,7 +22,7 @@ export function AuthProvider({ children }) {
   // Inicia sesión llamando al backend real
   async function login({ email, password }) {
     try {
-      const res = await fetch('https://schoolboard-rcyh.onrender.com/api/auth/login', {
+      const res = await fetch('https://schoolboard-1.onrender.com/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ export function AuthProvider({ children }) {
   // Solicitar código de registro
   async function requestRegistrationCode({ name, email, password }) {
     try {
-      const res = await fetch('https://schoolboard-rcyh.onrender.com/api/auth/register-send-code', {
+      const res = await fetch('https://schoolboard-1.onrender.com/api/auth/register-send-code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password }),
@@ -71,7 +71,7 @@ export function AuthProvider({ children }) {
   // Confirmar registro con el código
   async function register({ email, code }) {
     try {
-      const res = await fetch('https://schoolboard-rcyh.onrender.com/api/auth/register', {
+      const res = await fetch('https://schoolboard-1.onrender.com/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, code }),
@@ -94,7 +94,7 @@ export function AuthProvider({ children }) {
 
   // Solicitar recuperación de contraseña (HU-16)
   async function forgotPassword({ email }) {
-    const res = await fetch('https://schoolboard-rcyh.onrender.com/api/auth/forgot-password', {
+    const res = await fetch('https://schoolboard-1.onrender.com/api/auth/forgot-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -106,7 +106,7 @@ export function AuthProvider({ children }) {
 
   // Establecer nueva contraseña con el token recibido (HU-16)
   async function resetPassword({ token, newPassword }) {
-    const res = await fetch('https://schoolboard-rcyh.onrender.com/api/auth/reset-password', {
+    const res = await fetch('https://schoolboard-1.onrender.com/api/auth/reset-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token, newPassword }),
@@ -118,7 +118,7 @@ export function AuthProvider({ children }) {
 
   async function updateProfile({ name, email }) {
     try {
-      const res = await fetch('https://schoolboard-rcyh.onrender.com/api/auth/profile', {
+      const res = await fetch('https://schoolboard-1.onrender.com/api/auth/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
