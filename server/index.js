@@ -37,11 +37,20 @@ const app = express()
 const PORT = process.env.PORT || 5000
 const JWT_SECRET = 'schoolboard_secret_key_123456789'
 
-// Run DB Initialization
-await initializeDb()
-
 app.use(cors())
 app.use(express.json())
+
+// Healthcheck & Root Status Endpoints for Render and uptime monitors
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', app: 'SchoolBoard Backend API', timestamp: new Date().toISOString() })
+})
+
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok' })
+})
+
+// Run DB Initialization safely
+initializeDb().catch(err => console.error('Database initialization error:', err))
 
 // Middleware: Authenticate Request
 function authenticateToken(req, res, next) {
@@ -1265,6 +1274,6 @@ app.delete('/api/teams/:id', authenticateToken, async (req, res) => {
 })
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`SchoolBoard Backend server running at http://localhost:${PORT}`)
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`SchoolBoard Backend server running at http://0.0.0.0:${PORT}`)
 })
