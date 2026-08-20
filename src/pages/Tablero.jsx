@@ -361,13 +361,9 @@ export default function Tablero() {
   const allTasksCount = useMemo(() => {
     return columns.reduce((acc, col) => acc + col.tasks.length, 0)
   }, [columns])
-
   const availableWorkspaces = useMemo(() => {
-    const spaceNames = workspaces.map(w => w.name)
-    const set = new Set(spaceNames)
-    allTasks.forEach(t => { if (t.project && t.project !== 'Espacio General') set.add(t.project) })
-    return Array.from(set)
-  }, [workspaces, allTasks])
+    return (workspaces || []).map(w => w.name).filter(Boolean)
+  }, [workspaces])
 
   const filteredColumns = useMemo(() => {
     return columns.map(col => ({
