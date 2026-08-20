@@ -273,7 +273,7 @@ export default function Reportes() {
 
     try {
       setLoadingLogs(true)
-      const res = await fetch('https://schoolboard-1.onrender.com/api/logs', {
+      const res = await fetch('https://schoolboard-production-fed9.up.railway.app/api/logs', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
