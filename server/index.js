@@ -420,12 +420,28 @@ app.post('/api/auth/reset', authenticateToken, async (req, res) => {
 
 // --- TASKS API ROUTES ---
 
-// GET /api/tasks - Retrieve all tasks organized in columns
+// GET /api/tasks - Retrieve all tasks organized in columns (filtered per user/workspace)
 app.get('/api/tasks', authenticateToken, async (req, res) => {
   try {
     const db = await getDbConnection()
 
-    const tasks = await db.all('SELECT * FROM tasks')
+    let tasks = []
+    if (req.user.role === 'admin') {
+      tasks = await db.all('SELECT * FROM tasks')
+    } else {
+      tasks = await db.all(`
+        SELECT DISTINCT t.* FROM tasks t
+        WHERE 
+          t.creator_id = ?
+          OR t.assignee = ?
+          OR t.project IN (
+            SELECT w.name FROM workspaces w
+            LEFT JOIN workspace_members wm ON wm.workspace_id = w.id
+            WHERE w.owner_id = ? OR wm.user_id = ?
+          )
+      `, [req.user.id, req.user.name, req.user.id, req.user.id])
+    }
+
     const subtasks = await db.all('SELECT * FROM subtasks')
     const comments = await db.all('SELECT * FROM comments')
     const evidences = await db.all('SELECT * FROM evidences')
@@ -520,11 +536,11 @@ app.post('/api/tasks', authenticateToken, async (req, res) => {
   try {
     const db = await getDbConnection()
     
-    // Inserta la nueva actividad en la tabla 'tasks', definiendo responsable (assignee) y prioridad (priority)
+    // Inserta la nueva actividad en la tabla 'tasks', definiendo responsable (assignee), prioridad (priority) y creador (creator_id)
     await db.run(`
-      INSERT INTO tasks (id, title, description, details, priority, status, project, epic, user_story, assignee, date, created, updated)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `, [id, title, description, details, priority, status, project, epic, userStory, assignee, date, created, updated])
+      INSERT INTO tasks (id, title, description, details, priority, status, project, epic, user_story, assignee, date, created, updated, creator_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `, [id, title, description, details, priority, status, project, epic, userStory, assignee, date, created, updated, req.user.id])
 
     // Save initial evidences if any
     if (evidences && Array.isArray(evidences)) {

@@ -181,7 +181,8 @@ export default function Navbar() {
         toast.success('Base de datos y caché local restablecidos. Recargando...', 3000)
         setTimeout(() => window.location.reload(), 1500)
       } else {
-        toast.error('Error al restablecer base de datos.')
+        const data = await res.json().catch(() => ({}))
+        toast.error(data.error || 'Error al restablecer base de datos. Se requiere rol de administrador.')
       }
     } catch (err) {
       console.error(err)
@@ -680,26 +681,28 @@ export default function Navbar() {
                 </div>
               </div>
 
-              {/* Herramientas de Sistema y Restablecimiento */}
-              <div className="space-y-3 pt-4 border-t border-border/60">
-                <div className="flex items-center gap-2 text-priority-high font-extrabold text-xs uppercase tracking-wider">
-                  <ShieldAlert size={14} />
-                  <span>Herramientas de Mantenimiento</span>
+              {/* Herramientas de Sistema y Restablecimiento (Solo Administrador) */}
+              {user?.role === 'admin' && (
+                <div className="space-y-3 pt-4 border-t border-border/60">
+                  <div className="flex items-center gap-2 text-priority-high font-extrabold text-xs uppercase tracking-wider">
+                    <ShieldAlert size={14} />
+                    <span>Herramientas de Mantenimiento (Admin)</span>
+                  </div>
+                  <p className="text-xs text-text-secondary">
+                    Restablece toda la base de datos de actividades y comentarios a su estado de prueba original.
+                  </p>
+                  
+                  <button
+                    type="button"
+                    onClick={handleDatabaseReset}
+                    disabled={isResetting}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-priority-high/10 border border-priority-high/30 hover:bg-priority-high text-priority-high hover:text-white font-extrabold text-xs rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 select-none cursor-pointer"
+                  >
+                    <RotateCcw size={15} />
+                    {isResetting ? 'Restableciendo Base de Datos...' : 'Restablecer Base de Datos'}
+                  </button>
                 </div>
-                <p className="text-xs text-text-secondary">
-                  Restablece toda la base de datos de actividades y comentarios a su estado de prueba original.
-                </p>
-                
-                <button
-                  type="button"
-                  onClick={handleDatabaseReset}
-                  disabled={isResetting}
-                  className="w-full flex items-center justify-center gap-2 py-3 bg-priority-high/10 border border-priority-high/30 hover:bg-priority-high text-priority-high hover:text-white font-extrabold text-xs rounded-xl transition-all shadow-sm active:scale-95 disabled:opacity-50 select-none"
-                >
-                  <RotateCcw size={15} />
-                  {isResetting ? 'Restableciendo Base de Datos...' : 'Restablecer Base de Datos'}
-                </button>
-              </div>
+              )}
             </div>
 
             {/* Pie del Modal Anclado (Garantizado sin Cortes) */}

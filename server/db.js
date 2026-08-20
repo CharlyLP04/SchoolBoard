@@ -123,9 +123,15 @@ export async function initializeDb() {
         assignee TEXT,
         date TEXT,
         created TEXT,
-        updated TEXT
+        updated TEXT,
+        creator_id INTEGER REFERENCES users (id) ON DELETE SET NULL
       );
     `)
+
+    // Ensure creator_id column exists if table was already created
+    try {
+      await db.exec('ALTER TABLE tasks ADD COLUMN IF NOT EXISTS creator_id INTEGER;')
+    } catch (e) {}
 
     // Create Subtasks Table
     await db.exec(`
