@@ -8,40 +8,20 @@ export function TaskProvider({ children }) {
   const { token, user } = useAuth()
   const toast = useToast()
   
-  // Estado de Columnas Kanban con Respaldo Automático Local contra reinicios del Servidor Nube
-  const [columns, setColumns] = useState(() => {
-    try {
-      const saved = localStorage.getItem('schoolboard_v3_clean_tasks')
-      if (saved) return JSON.parse(saved)
-    } catch (e) {}
-    return [
-      { id: 'pendiente', title: 'Pendiente', tasks: [] },
-      { id: 'proceso', title: 'En proceso', tasks: [] },
-      { id: 'revision', title: 'En revisión', tasks: [] },
-      { id: 'completada', title: 'Completada', tasks: [] }
-    ]
-  })
+  // Estado de Columnas Kanban 100% en línea desde PostgreSQL
+  const [columns, setColumns] = useState([
+    { id: 'pendiente', title: 'Pendiente', tasks: [] },
+    { id: 'proceso', title: 'En proceso', tasks: [] },
+    { id: 'revision', title: 'En revisión', tasks: [] },
+    { id: 'completada', title: 'Completada', tasks: [] }
+  ])
   
-  const [workspaces, setWorkspaces] = useState(() => {
-    try {
-      const saved = localStorage.getItem('schoolboard_v3_clean_workspaces')
-      return saved ? JSON.parse(saved) : []
-    } catch (e) { return [] }
-  })
-
+  const [workspaces, setWorkspaces] = useState([])
   const [teams, setTeams] = useState([])
   const [teamMembers, setTeamMembers] = useState([])
+  const [epics, setEpics] = useState([])
 
-  // Sincronizar tareas y espacios
-  useEffect(() => {
-    try { localStorage.setItem('schoolboard_v3_clean_tasks', JSON.stringify(columns)) } catch (e) {}
-  }, [columns])
-
-  useEffect(() => {
-    try { localStorage.setItem('schoolboard_v3_clean_workspaces', JSON.stringify(workspaces)) } catch (e) {}
-  }, [workspaces])
-
-  // Obtener Actividades del backend (protegiendo el trabajo del usuario si el servidor gratuito se reinició)
+  // Obtener Actividades en vivo del backend
   const fetchTasks = useCallback(async () => {
     if (!token) return
     try {
@@ -50,24 +30,14 @@ export function TaskProvider({ children }) {
       })
       if (res.ok) {
         const data = await res.json()
-        const serverTasksCount = data.reduce((acc, col) => acc + (col.tasks?.length || 0), 0)
-        const localData = JSON.parse(localStorage.getItem('schoolboard_v3_clean_tasks') || '[]')
-        const localTasksCount = (Array.isArray(localData) ? localData : []).reduce((acc, col) => acc + (col.tasks?.length || 0), 0)
-        
-        if (serverTasksCount > 0 || localTasksCount === 0) {
-          setColumns(data)
-        } else if (localTasksCount > 0) {
-          setColumns(localData)
-        }
+        setColumns(data)
       }
     } catch (e) {
-      console.error('Error al consultar servidor, cargando desde respaldo local', e)
-      const localData = JSON.parse(localStorage.getItem('schoolboard_v3_clean_tasks') || '[]')
-      if (Array.isArray(localData) && localData.length > 0) setColumns(localData)
+      console.error('Error al consultar actividades del servidor', e)
     }
   }, [token])
 
-  // Obtener Epics del backend / persistencia local
+  // Obtener Epics del backend
   const fetchEpics = useCallback(async () => {
     if (!token) return
     try {
@@ -76,17 +46,14 @@ export function TaskProvider({ children }) {
       })
       if (res.ok) {
         const data = await res.json()
-        if (data && data.length > 0) {
-          setEpics(data)
-          return
-        }
+        setEpics(data || [])
       }
-    } catch (e) {}
-    const localEpics = JSON.parse(localStorage.getItem('schoolboard_v3_clean_epics') || '[]')
-    if (localEpics.length > 0) setEpics(localEpics)
+    } catch (e) {
+      console.error('Error al consultar epics del servidor', e)
+    }
   }, [token])
 
-  // Obtener Espacios (Workspaces) en vivo del backend / persistencia local
+  // Obtener Espacios (Workspaces) en vivo del backend
   const fetchWorkspaces = useCallback(async () => {
     if (!token) return
     try {
@@ -95,14 +62,11 @@ export function TaskProvider({ children }) {
       })
       if (res.ok) {
         const data = await res.json()
-        if (data && data.length > 0) {
-          setWorkspaces(data)
-          return
-        }
+        setWorkspaces(data || [])
       }
-    } catch (e) {}
-    const localWp = JSON.parse(localStorage.getItem('schoolboard_v3_clean_workspaces') || '[]')
-    if (localWp.length > 0) setWorkspaces(localWp)
+    } catch (e) {
+      console.error('Error al consultar espacios del servidor', e)
+    }
   }, [token])
 
   // Obtener Grupos y Compañeros del backend
@@ -114,9 +78,11 @@ export function TaskProvider({ children }) {
       })
       if (res.ok) {
         const data = await res.json()
-        setTeams(data)
+        setTeams(data || [])
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('Error al consultar grupos del servidor', e)
+    }
   }, [token])
 
   const fetchColleagues = useCallback(async () => {
@@ -127,9 +93,11 @@ export function TaskProvider({ children }) {
       })
       if (res.ok) {
         const data = await res.json()
-        setTeamMembers(data)
+        setTeamMembers(data || [])
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error('Error al consultar compañeros del servidor', e)
+    }
   }, [token])
 
   useEffect(() => {
@@ -138,8 +106,20 @@ export function TaskProvider({ children }) {
       fetchWorkspaces()
       fetchTeams()
       fetchColleagues()
+      fetchEpics()
+    } else {
+      setColumns([
+        { id: 'pendiente', title: 'Pendiente', tasks: [] },
+        { id: 'proceso', title: 'En proceso', tasks: [] },
+        { id: 'revision', title: 'En revisión', tasks: [] },
+        { id: 'completada', title: 'Completada', tasks: [] }
+      ])
+      setWorkspaces([])
+      setTeams([])
+      setTeamMembers([])
+      setEpics([])
     }
-  }, [token, fetchTasks, fetchWorkspaces, fetchTeams, fetchColleagues])
+  }, [token, fetchTasks, fetchWorkspaces, fetchTeams, fetchColleagues, fetchEpics])
 
   // Todas las tareas planas (sin importar la columna)
   const allTasks = useMemo(() => {
@@ -267,12 +247,7 @@ export function TaskProvider({ children }) {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
-        // Limpiar de localStorage también para evitar que el failsafe de reinicio de servidor lo reviva si es la última tarea
-        setColumns(prev => {
-          const newCols = prev.map(col => ({ ...col, tasks: col.tasks.filter(t => t.id !== taskId) }))
-          try { localStorage.setItem('schoolboard_v3_clean_tasks', JSON.stringify(newCols)) } catch (e) {}
-          return newCols
-        })
+        setColumns(prev => prev.map(col => ({ ...col, tasks: col.tasks.filter(t => t.id !== taskId) })))
         await fetchTasks()
         toast.info('Actividad eliminada definitivamente', 2500)
       } else {
@@ -522,36 +497,16 @@ export function TaskProvider({ children }) {
 
 
   
-  const [epics, setEpics] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem('schoolboard_v3_clean_epics') || '[]')
-    } catch {
-      return []
-    }
-  })
-
   const addEpic = useCallback((newEpic) => {
-    setEpics(prev => {
-      const updated = [...prev, { ...newEpic, id: 'EPIC-' + Math.random().toString(36).substr(2, 5).toUpperCase(), progress: 0, items: [] }]
-      localStorage.setItem('schoolboard_v3_clean_epics', JSON.stringify(updated))
-      return updated
-    })
+    setEpics(prev => [...prev, { ...newEpic, id: 'EPIC-' + Math.random().toString(36).substr(2, 5).toUpperCase(), progress: 0, items: [] }])
   }, [])
 
   const updateEpic = useCallback((epicId, updater) => {
-    setEpics(prev => {
-      const updated = prev.map(ep => ep.id === epicId ? { ...ep, ...updater(ep) } : ep)
-      localStorage.setItem('schoolboard_v3_clean_epics', JSON.stringify(updated))
-      return updated
-    })
+    setEpics(prev => prev.map(ep => ep.id === epicId ? { ...ep, ...updater(ep) } : ep))
   }, [])
 
   const deleteEpic = useCallback((epicId) => {
-    setEpics(prev => {
-      const updated = prev.filter(ep => ep.id !== epicId)
-      localStorage.setItem('schoolboard_v3_clean_epics', JSON.stringify(updated))
-      return updated
-    })
+    setEpics(prev => prev.filter(ep => ep.id !== epicId))
   }, [])
 
   const addTeamMember = useCallback(async (workspaceId, email) => {

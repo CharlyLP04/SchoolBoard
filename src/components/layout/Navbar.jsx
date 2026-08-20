@@ -171,14 +171,14 @@ export default function Navbar() {
       })
 
       if (res.ok) {
-        // Limpiar caché local
+        // Limpiar cualquier residuo previo
         localStorage.removeItem('schoolboard_v3_clean_tasks')
         localStorage.removeItem('schoolboard_v3_clean_epics')
         localStorage.removeItem('schoolboard_v3_clean_workspaces')
         localStorage.removeItem('schoolboard_v3_clean_teams')
         localStorage.removeItem('schoolboard_v3_clean_members')
         
-        toast.success('Base de datos y caché local restablecidos. Recargando...', 3000)
+        toast.success('Base de datos en la nube restablecida con éxito. Recargando...', 3000)
         setTimeout(() => window.location.reload(), 1500)
       } else {
         const data = await res.json().catch(() => ({}))
