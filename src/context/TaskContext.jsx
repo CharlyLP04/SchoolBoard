@@ -25,7 +25,7 @@ export function TaskProvider({ children }) {
   const fetchTasks = useCallback(async () => {
     if (!token) return
     try {
-      const res = await fetch('https://schoolboard-production-fed9.up.railway.app/api/tasks', {
+      const res = await fetch('https://schoolboard-production-74ef.up.railway.app/api/tasks', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
@@ -41,7 +41,7 @@ export function TaskProvider({ children }) {
   const fetchEpics = useCallback(async () => {
     if (!token) return
     try {
-      const res = await fetch('https://schoolboard-production-fed9.up.railway.app/api/epics', {
+      const res = await fetch('https://schoolboard-production-74ef.up.railway.app/api/epics', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
@@ -57,7 +57,7 @@ export function TaskProvider({ children }) {
   const fetchWorkspaces = useCallback(async () => {
     if (!token) return
     try {
-      const res = await fetch('https://schoolboard-production-fed9.up.railway.app/api/workspaces', {
+      const res = await fetch('https://schoolboard-production-74ef.up.railway.app/api/workspaces', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
@@ -73,7 +73,7 @@ export function TaskProvider({ children }) {
   const fetchTeams = useCallback(async () => {
     if (!token) return
     try {
-      const res = await fetch('https://schoolboard-production-fed9.up.railway.app/api/teams', {
+      const res = await fetch('https://schoolboard-production-74ef.up.railway.app/api/teams', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
@@ -88,7 +88,7 @@ export function TaskProvider({ children }) {
   const fetchColleagues = useCallback(async () => {
     if (!token) return
     try {
-      const res = await fetch('https://schoolboard-production-fed9.up.railway.app/api/colleagues', {
+      const res = await fetch('https://schoolboard-production-74ef.up.railway.app/api/colleagues', {
         headers: { 'Authorization': `Bearer ${token}` }
       })
       if (res.ok) {
@@ -173,7 +173,7 @@ export function TaskProvider({ children }) {
     }
 
     try {
-      const res = await fetch('https://schoolboard-production-fed9.up.railway.app/api/tasks', {
+      const res = await fetch('https://schoolboard-production-74ef.up.railway.app/api/tasks', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -221,7 +221,7 @@ export function TaskProvider({ children }) {
     }
 
     try {
-      const res = await fetch(`https://schoolboard-production-fed9.up.railway.app/api/tasks/${taskId}`, {
+      const res = await fetch(`https://schoolboard-production-74ef.up.railway.app/api/tasks/${taskId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -242,7 +242,7 @@ export function TaskProvider({ children }) {
 
   const deleteTask = useCallback(async (taskId) => {
     try {
-      const res = await fetch(`https://schoolboard-production-fed9.up.railway.app/api/tasks/${taskId}`, {
+      const res = await fetch(`https://schoolboard-production-74ef.up.railway.app/api/tasks/${taskId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -295,7 +295,7 @@ export function TaskProvider({ children }) {
       newCols[destColIndex] = { ...newCols[destColIndex], tasks: newDestTasks }
 
       // Persistir cambio
-      fetch(`https://schoolboard-production-fed9.up.railway.app/api/tasks/${updatedTask.id}`, {
+      fetch(`https://schoolboard-production-74ef.up.railway.app/api/tasks/${updatedTask.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -318,7 +318,7 @@ export function TaskProvider({ children }) {
     const subtaskId = `st-${Date.now()}-${Math.floor(Math.random()*1000)}`
     const subtaskDate = date || new Date().toISOString().split('T')[0]
     try {
-      const res = await fetch(`https://schoolboard-production-fed9.up.railway.app/api/tasks/${taskId}/subtasks`, {
+      const res = await fetch(`https://schoolboard-production-74ef.up.railway.app/api/tasks/${taskId}/subtasks`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -340,7 +340,7 @@ export function TaskProvider({ children }) {
 
   const toggleSubtask = useCallback(async (taskId, subtaskId, currentCompleted) => {
     try {
-      const res = await fetch(`https://schoolboard-production-fed9.up.railway.app/api/tasks/${taskId}/subtasks/${subtaskId}`, {
+      const res = await fetch(`https://schoolboard-production-74ef.up.railway.app/api/tasks/${taskId}/subtasks/${subtaskId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -356,7 +356,7 @@ export function TaskProvider({ children }) {
 
   const updateSubtask = useCallback(async (taskId, subtaskId, newTitle) => {
     try {
-      const res = await fetch(`https://schoolboard-production-fed9.up.railway.app/api/tasks/${taskId}/subtasks/${subtaskId}`, {
+      const res = await fetch(`https://schoolboard-production-74ef.up.railway.app/api/tasks/${taskId}/subtasks/${subtaskId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -372,7 +372,7 @@ export function TaskProvider({ children }) {
 
   const deleteSubtask = useCallback(async (taskId, subtaskId) => {
     try {
-      const res = await fetch(`https://schoolboard-production-fed9.up.railway.app/api/tasks/${taskId}/subtasks/${subtaskId}`, {
+      const res = await fetch(`https://schoolboard-production-74ef.up.railway.app/api/tasks/${taskId}/subtasks/${subtaskId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -412,7 +412,7 @@ export function TaskProvider({ children }) {
         }
       }
 
-      const res = await fetch(`https://schoolboard-production-fed9.up.railway.app/api/tasks/${taskId}/comments`, {
+      const res = await fetch(`https://schoolboard-production-74ef.up.railway.app/api/tasks/${taskId}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -436,7 +436,7 @@ export function TaskProvider({ children }) {
     try {
       const evidenceId = `ev-${Date.now()}-${Math.floor(Math.random()*1000)}`
       const linkName = name || url.replace(/^https?:\/\//i, '')
-      const res = await fetch(`https://schoolboard-production-fed9.up.railway.app/api/tasks/${taskId}/evidences`, {
+      const res = await fetch(`https://schoolboard-production-74ef.up.railway.app/api/tasks/${taskId}/evidences`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -459,7 +459,7 @@ export function TaskProvider({ children }) {
   const addEvidenceFile = useCallback(async (taskId, fileName, fileSize) => {
     try {
       const evidenceId = `ev-${Date.now()}-${Math.floor(Math.random()*1000)}`
-      const res = await fetch(`https://schoolboard-production-fed9.up.railway.app/api/tasks/${taskId}/evidences`, {
+      const res = await fetch(`https://schoolboard-production-74ef.up.railway.app/api/tasks/${taskId}/evidences`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -481,7 +481,7 @@ export function TaskProvider({ children }) {
 
   const deleteEvidence = useCallback(async (taskId, evidenceId) => {
     try {
-      const res = await fetch(`https://schoolboard-production-fed9.up.railway.app/api/tasks/${taskId}/evidences/${evidenceId}`, {
+      const res = await fetch(`https://schoolboard-production-74ef.up.railway.app/api/tasks/${taskId}/evidences/${evidenceId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })
@@ -511,7 +511,7 @@ export function TaskProvider({ children }) {
 
   const addTeamMember = useCallback(async (workspaceId, email) => {
     try {
-      const res = await fetch(`https://schoolboard-production-fed9.up.railway.app/api/workspaces/${workspaceId}/invite`, {
+      const res = await fetch(`https://schoolboard-production-74ef.up.railway.app/api/workspaces/${workspaceId}/invite`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -540,7 +540,7 @@ export function TaskProvider({ children }) {
 
   const addTeam = useCallback(async (teamData) => {
     try {
-      const res = await fetch('https://schoolboard-production-fed9.up.railway.app/api/teams', {
+      const res = await fetch('https://schoolboard-production-74ef.up.railway.app/api/teams', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -572,7 +572,7 @@ export function TaskProvider({ children }) {
 
   const deleteTeam = useCallback(async (teamId) => {
     try {
-      const res = await fetch(`https://schoolboard-production-fed9.up.railway.app/api/teams/${teamId}`, {
+      const res = await fetch(`https://schoolboard-production-74ef.up.railway.app/api/teams/${teamId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       })

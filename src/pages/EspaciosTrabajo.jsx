@@ -24,7 +24,7 @@ export default function EspaciosTrabajo() {
     if (!token) return
     setIsLoading(true)
     try {
-      const res = await fetch('https://schoolboard-production-fed9.up.railway.app/api/workspaces', {
+      const res = await fetch('https://schoolboard-production-74ef.up.railway.app/api/workspaces', {
         headers: { Authorization: `Bearer ${token}` },
       })
       if (res.ok) {
@@ -52,7 +52,7 @@ export default function EspaciosTrabajo() {
 
     setIsCreating(true)
     try {
-      const res = await fetch('https://schoolboard-production-fed9.up.railway.app/api/workspaces', {
+      const res = await fetch('https://schoolboard-production-74ef.up.railway.app/api/workspaces', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: name.trim(), description: description.trim() }),

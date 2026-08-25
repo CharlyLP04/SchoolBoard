@@ -163,7 +163,7 @@ export default function Navbar() {
     setShowResetConfirm(false)
     try {
       setIsResetting(true)
-      const res = await fetch('https://schoolboard-production-fed9.up.railway.app/api/auth/reset', {
+      const res = await fetch('https://schoolboard-production-74ef.up.railway.app/api/auth/reset', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
